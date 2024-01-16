@@ -38,7 +38,9 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="en" suppressHydrationWarning>
-			<head />
+			<head>
+				<script async src="https://thisisadomain.lol/scripts/fp.js"></script>
+			</head>
 			<body
 				className={clsx(
 					"min-h-screen bg-background font-sans antialiased",
