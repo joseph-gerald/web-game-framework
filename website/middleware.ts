@@ -10,6 +10,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/new', request.url))
   }
 
+  if (request.url.includes('/new') && token) return NextResponse.redirect(new URL('/', request.url))
+
   return NextResponse.next()
 }
 
