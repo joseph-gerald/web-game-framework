@@ -1,12 +1,11 @@
 import tracking_utils from "@/utils/tracking_utils";
 import jwt from "jsonwebtoken";
-import { randomUUID } from "crypto";
 import { ipAddress } from "@vercel/edge";
 import client from '../_db';
 
 import Session from "@/models/Session";
 
-client.db("KongsberGuessr").collection("users");
+client.db("wgf-demo").collection("users");
 
 export async function POST(req: Request) {
   if (tracking_utils.isNotJSON(req)) {
