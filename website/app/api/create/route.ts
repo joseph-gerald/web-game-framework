@@ -10,7 +10,7 @@ client.db("KongsberGuessr").collection("users");
 
 export async function POST(req: Request) {
   if (tracking_utils.isNotJSON(req)) {
-    return Response.json({ error: "Invalid request" }, { status: 400 })
+    return new Response(JSON.stringify({ error: "Invalid request" }), { status: 400 })
   }
 
   const { username, fp } = await req.json();
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   const ip_address = req.headers.get("cf-connecting-ip") || ipAddress(req) || "null";
 
   if (!fingerprint.passed) {
-    return Response.json({ error: "Invalid Fingerprint" }, { status: 400 })
+    return new Response(JSON.stringify({ error: "Invalid Fingerprint" }), { status: 400 })
   }
 
   const session = new Session({
@@ -45,5 +45,5 @@ export async function POST(req: Request) {
     }
   )
 
-  return Response.json({ token, username: final_username })
+  return new Response(JSON.stringify({ token, username: final_username }))
 }
