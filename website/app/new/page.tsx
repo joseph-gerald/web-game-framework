@@ -3,21 +3,50 @@
 import React, { useEffect, useState } from "react";
 import { Input } from "@nextui-org/input";
 import { Button } from "@nextui-org/button";
-import { title, subtitle } from "@/components/primitives";
+import { title } from "@/components/primitives";
+import { useRouter } from 'next/navigation'
 
 export default function Page() {
+    const router = useRouter()
+
     const [buttonText, setButtonText] = useState("");
+    const [usernameError, setUsernameError] = React.useState("");
     const [isLoading, setIsLoading] = useState(true);
 
     const [value, setValue] = React.useState("");
+    const [invalid, setInvalid] = React.useState(false);
 
-    const validateUsername = (username: string) => username.match(/\p{Emoji}/ug)
+    const emojiTest = (username: string) => username.match(/\p{Emoji}/ug)
 
-    const isInvalid = React.useMemo(() => {
+    const isInvalid = () => {
         if (value === "") return false;
 
-        return validateUsername(value) ? true : false;
-    }, [value]);
+        setInvalid(true);
+        if (emojiTest(value)) {
+            setUsernameError("Username cannot contain emojis");
+            return true;
+        }
+
+        if (value.length < 3) {
+            console.log(value)
+            setUsernameError("Username must be at least 3 characters long");
+            return true;
+        }
+
+        if (value.length > 20) {
+            setUsernameError("Username cannot be longer than 20 characters");
+            return true;
+        }
+
+        if (value.match(/[^a-zA-Z0-9_]/g)) {
+            setUsernameError("Username can only contain letters, numbers and underscores");
+            return true;
+        }
+
+        setUsernameError("");
+        setInvalid(false);
+        return false
+    };
 
     useEffect(() => {
         const loop = setInterval(() => {
@@ -31,20 +60,35 @@ export default function Page() {
     });
 
     async function registerSession(username: string) {
-        setButtonText("Submitting");
-        //setIsLoading(true);
+        if (isInvalid()) return;
 
-        fetch("/api/create", {
+        setButtonText("Submitting");
+        setIsLoading(true);
+
+        const res = await fetch("/api/create", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 username,
                 // @ts-ignore
                 fp: window.fp
             })
         })
+
+        const data = await res.json();
+
+        if (data.error) {
+            setButtonText(data.error);
+            setIsLoading(false);
+            return console.error(data.error);
+        }
+
+        document.cookie = "token=" + data.token + "; path=/;";
+        window.localStorage.setItem("username", data.username);
+
+        router.push("/");
     }
 
     return (
@@ -54,9 +98,9 @@ export default function Page() {
                 variant="underlined"
                 value={value}
                 onValueChange={setValue}
-                isInvalid={isInvalid}
-                color={isInvalid ? "danger" : "default"}
-                errorMessage={isInvalid && "Username cannot include emojis"}
+                isInvalid={invalid}
+                color={invalid ? "default" : "default"}
+                errorMessage={invalid && usernameError}
             ></Input>
             <Button onClick={() => { registerSession(value) }} color="secondary" fullWidth className="text-xl font-bold text-white/50 hover:text-text" isLoading={isLoading}>{buttonText}</Button>
         </section >

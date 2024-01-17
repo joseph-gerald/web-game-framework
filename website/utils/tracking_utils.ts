@@ -1,5 +1,10 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import tracking_utils from "./tracking_utils";
+const emojis = Array.from("😷🤒🤕🤢🤮🤧😢😭😨🤯🥵🥶🤑😴🥰🤣🤡💀👽👾🤖👶💋❤️💔💙💚💛🧡💜🖤💤💢💣💥💦💨💫👓💍💎👑🎓🧢💄💍💎🐵🦒🐘🐀🍆🍑🍒🍓⚽🎯🔊🔇🔋🔌💻💰💯");
+const emojiPattern = /\p{Emoji}/u;
+
+function getEmojiIndex(string: string) {
+    const index = string.split("").map(x => x.charCodeAt(0)).reduce((a, b) => a + b);
+    return index % emojis.length;
+}
 
 async function sha1(str: string): Promise<string> {
     const data = new TextEncoder().encode(str);
@@ -34,11 +39,13 @@ async function process(hash: string, data: string, useragent: string) {
     // Verdict from both checks
     const passed = integrity && sameUseragent;
 
-    return { hash, data_object, passed }
+    const emoji = emojis[getEmojiIndex(computed_hash)];
+
+    return { hash, data_object, passed, emoji }
 }
 
-function isNotJSON(req: NextApiRequest) {
-    return typeof req.body !== 'object' || req.headers['content-type'] != "application/json";
+function isNotJSON(req: Request) {
+    return typeof req.body !== 'object' || req.headers.get('content-type') != "application/json";
 }
 
 export default { process, isNotJSON };
