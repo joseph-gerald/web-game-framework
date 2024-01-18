@@ -7,5 +7,5 @@ export async function POST(req: Request) {
     if (tracking_utils.isNotJSON(req)) {
         return new Response(JSON.stringify({ error: "Invalid request" }), { status: 400 })
     }
-
+    
 }
