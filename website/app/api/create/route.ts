@@ -1,7 +1,7 @@
 import tracking_utils from "@/utils/tracking_utils";
-import jwt from "jsonwebtoken";
+import * as jose from 'jose'
 import { ipAddress } from "@vercel/edge";
-import client from '../_db';
+import client from '@/app/api/_db';
 
 import Session from "@/models/Session";
 
@@ -26,23 +26,19 @@ export async function POST(req: Request) {
     fingerprint_data: JSON.stringify(fingerprint.data_object),
     ip_address
   })
-  
-  
+
+
   await session.save();
 
   const session_id = session._id;
 
   const final_username = username + " " + fingerprint.emoji;
 
-  const token = jwt.sign(
+  const token = await new jose.CompactSign(new TextEncoder().encode(JSON.stringify(
     {
       username: final_username,
       session_id
-    }, process.env.SECRET_KEY as string,
-    {
-      expiresIn: "1h"
-    }
-  )
+    }))).setProtectedHeader({ alg: "HS256" }).sign(Buffer.from(process.env.SECRET_KEY as string))
 
   return new Response(JSON.stringify({ token, username: final_username }))
 }
