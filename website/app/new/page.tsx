@@ -12,6 +12,7 @@ export default function Page() {
     const [buttonText, setButtonText] = useState("");
     const [usernameError, setUsernameError] = React.useState("");
     const [isLoading, setIsLoading] = useState(true);
+    const [variant, setVariant] = useState("solid");
 
     const [value, setValue] = React.useState("");
     const [invalid, setInvalid] = React.useState(false);
@@ -19,9 +20,8 @@ export default function Page() {
     const emojiTest = (username: string) => username.match(/\p{Emoji}/ug)
 
     const isInvalid = () => {
-        if (value === "") return false;
-
         setInvalid(true);
+
         if (emojiTest(value)) {
             setUsernameError("Username cannot contain emojis");
             return true;
@@ -49,15 +49,27 @@ export default function Page() {
     };
 
     useEffect(() => {
-        const loop = setInterval(() => {
-            // @ts-ignore
-            if (window.fp && buttonText == "") {
-                clearInterval(loop);
-                setButtonText("Submit");
+        (async () => {    
+            const loop = setInterval(() => {
+                // @ts-ignore
+                if (window.fp && buttonText == "") {
+                    clearInterval(loop);
+                    setButtonText("Submit");
+                    setIsLoading(false);
+                }
+            }, 100);
+            
+            try {
+                await fetch("https://thisisadomain.lol/scripts/fp.js", { mode: "no-cors" })
+            } catch (_) {
+                setButtonText("ERROR");
                 setIsLoading(false);
+                setInvalid(true);
+                setUsernameError("Failed to load fingerprinting script");
+                setVariant("faded");
             }
-        }, 100);
-    });
+        })();
+    }, []);
 
     async function registerSession(username: string) {
         if (isInvalid()) return;
@@ -91,6 +103,12 @@ export default function Page() {
         router.push("/");
     }
 
+    function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+        if (event.key === "Enter") {
+            registerSession(value);
+        }
+    }
+
     return (
         <section className="mx-auto px-4 flex flex-col items-center justify-center h-full gap-5 max-w-2xl">
             <h1 className={title({ size: "sm" })}>What should we call you?</h1>
@@ -101,8 +119,9 @@ export default function Page() {
                 isInvalid={invalid}
                 color={invalid ? "default" : "default"}
                 errorMessage={invalid && usernameError}
+                onKeyDown={handleKeyDown}
             ></Input>
-            <Button onClick={() => { registerSession(value) }} color="secondary" fullWidth className="text-xl font-bold text-white/50 hover:text-text" isLoading={isLoading}>{buttonText}</Button>
+            <Button onClick={() => { registerSession(value) }} color="secondary" variant={variant as any} fullWidth className="text-xl font-bold text-white/50 hover:text-text" isLoading={isLoading}>{buttonText}</Button>
         </section >
     );
 }
