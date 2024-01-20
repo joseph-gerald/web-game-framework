@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 import tracking_utils from './utils/tracking_utils'
+import game_utils from './utils/game_utils'
 
 export async function middleware(request: NextRequest) {
   let token = request.cookies.get('token')
   const initial = request.headers.get("sec-fetch-mode") === "navigate"
 
   if (!token && !request.url.includes('/new') && initial) {
-    console.log(request.url, initial)
+    if (game_utils.DEBUG) console.log(request.url, initial)
 
     if (request.method === "POST") return NextResponse.error();
 
@@ -18,7 +19,9 @@ export async function middleware(request: NextRequest) {
   if (!token?.value) return NextResponse.next();
 
   const data = await tracking_utils.readJWT(token.value);
-  console.log(data)
+  
+  if (game_utils.DEBUG) console.log(data)
+  
   if (data) {
     if (request.url.includes('/new') && token) return NextResponse.redirect(new URL('/', request.url))
 

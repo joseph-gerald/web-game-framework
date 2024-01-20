@@ -1,6 +1,8 @@
 import tracking_utils from "@/utils/tracking_utils";
 import client from '@/app/api/_db';
 import Room from "@/models/Room";
+import crypto_utils from "@/utils/crypto_utils";
+import game_utils from "@/utils/game_utils";
 
 client.db("wgf-demo").collection("rooms");
 
@@ -38,7 +40,7 @@ export async function POST(req: Request) {
 
     await room.save();
 
-    const roomKey = {
+    const key = await crypto_utils.jwtSign({
         room: {
             code,
             id: room._id
@@ -48,7 +50,11 @@ export async function POST(req: Request) {
             session,
             username: data.username
         }
-    }
+    });
 
-    return new Response(JSON.stringify(roomKey))
+    return new Response(JSON.stringify({
+        count: game_utils.servers.length,
+        code,
+        key
+    }))
 }

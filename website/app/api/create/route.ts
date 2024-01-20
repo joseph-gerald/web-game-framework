@@ -4,6 +4,7 @@ import { ipAddress } from "@vercel/edge";
 import client from '@/app/api/_db';
 
 import Session from "@/models/Session";
+import crypto_utils from "@/utils/crypto_utils";
 
 client.db("wgf-demo").collection("users");
 const emojiPattern = /\p{Emoji}/u;
@@ -41,11 +42,11 @@ export async function POST(req: Request) {
 
   const final_username = username + " " + fingerprint.emoji;
 
-  const token = await new jose.CompactSign(new TextEncoder().encode(JSON.stringify(
+  const token = await crypto_utils.jwtSign(
     {
       username: final_username,
       session_id
-    }))).setProtectedHeader({ alg: "HS256" }).sign(Buffer.from(process.env.SECRET_KEY as string))
+    });
 
   return new Response(JSON.stringify({ token, username: final_username }))
 }

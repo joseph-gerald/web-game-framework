@@ -1,6 +1,6 @@
-import { Secret } from "jsonwebtoken";
+import * as jose from 'jose'
 
-const SECRET_KEY: Secret = process.env.SECRET_KEY as string;
+const SECRET_KEY: string = process.env.SECRET_KEY as string;
 
 async function sha1(str: string): Promise<string> {
     const data = new TextEncoder().encode(str);
@@ -10,4 +10,8 @@ async function sha1(str: string): Promise<string> {
     return hashHex;
 }
 
-export default { sha1, SECRET_KEY };
+async function jwtSign(payload: any) {
+    return await new jose.CompactSign(new TextEncoder().encode(JSON.stringify(payload))).setProtectedHeader({ alg: "HS256" }).sign(Buffer.from(SECRET_KEY as string))
+}
+
+export default { sha1, jwtSign, SECRET_KEY };
