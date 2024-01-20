@@ -1,4 +1,5 @@
-![banner](https://github.com/joseph-gerald/web-game-framework/assets/73967013/3ccb858d-3a27-45ef-9522-c8f95d0cbf50)
+![banner](https://github.com/joseph-gerald/web-game-framework/assets/73967013/cc85631e-7afd-4fab-ae33-55b9cddcc305)
+
 
 <p align="center">
   <a href="https://demo.joo.tech/">
