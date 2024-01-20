@@ -6,6 +6,7 @@ import client from '@/app/api/_db';
 import Session from "@/models/Session";
 
 client.db("wgf-demo").collection("users");
+const emojiPattern = /\p{Emoji}/u;
 
 export async function POST(req: Request) {
   if (tracking_utils.isNotJSON(req)) {
@@ -13,8 +14,12 @@ export async function POST(req: Request) {
   }
 
   const { username, fp } = await req.json();
-  const fingerprint = await tracking_utils.process(fp.hash, fp.data, req.headers.get("user-agent") as string)
+  const fingerprint = await tracking_utils.handle(fp.hash, fp.data, req.headers.get("user-agent") as string)
   const ip_address = req.headers.get("cf-connecting-ip") || ipAddress(req) || "null";
+
+  if (emojiPattern.test(username)) {
+    return new Response(JSON.stringify({ error: "Invalid Username" }), { status: 400 })
+  }
 
   if (!fingerprint.passed) {
     return new Response(JSON.stringify({ error: "Invalid Fingerprint" }), { status: 400 })
@@ -22,8 +27,10 @@ export async function POST(req: Request) {
 
   const session = new Session({
     display_name: username + " " + fingerprint.emoji,
-    fingerprint_hash: fingerprint.hash,
-    fingerprint_data: JSON.stringify(fingerprint.data_object),
+    fingerprint: {
+      hash: fingerprint.hash,
+      data: fingerprint.data_object
+    },
     ip_address
   })
 

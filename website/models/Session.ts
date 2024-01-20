@@ -7,12 +7,8 @@ const scheme = new Schema({
         type: String,
         required: [true, 'Display name is required']
     },
-    fingerprint_hash: {
-        type: String,
-        required: [true, 'Fingerprint is required']
-    },
-    fingerprint_data: {
-        type: String,
+    fingerprint: {
+        type: Object,
         required: [true, 'Fingerprint is required']
     },
     ip_address: {

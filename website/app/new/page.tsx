@@ -69,7 +69,7 @@ export default function Page() {
                 setVariant("faded");
             }
         })();
-    }, []);
+    });
 
     async function registerSession(username: string) {
         if (isInvalid()) return;
@@ -99,6 +99,7 @@ export default function Page() {
 
         document.cookie = "token=" + data.token + "; path=/;";
         window.localStorage.setItem("username", data.username);
+        window.localStorage.setItem("token", data.token);
 
         router.push("/");
     }

@@ -6,16 +6,28 @@ import { Icon } from '@iconify/react';
 
 export default function Home() {
 	const [username, setUsername] = useState("");
+	const [isLoading, setIsLoading] = useState(false);
 
 	useEffect(() => {
 		setUsername(window.localStorage.getItem("username") as string);
 	}, []);
 
 	const handlers: { [key: string]: () => void } = {
-		create: () => {
+		create: async () => {
+			setIsLoading(true)
+			const data = await fetch("/api/room/reserve", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Authorization": localStorage.getItem("token") as string 
+				},
+				body: JSON.stringify({
+					username
+				})
+			}).then(res => res.json());
 			console.log("create");
 		},
-		join: () => {
+		join: async () => {
 			console.log("join");
 		}
 	}
@@ -30,7 +42,7 @@ export default function Home() {
 				name: "join",
 				icon: "material-symbols:fiber-pin-rounded"
 			}].map((item, index) => (
-				<Card shadow="sm" className={`w-[calc(100%-50px)] my-6 mb-${item.name == "create" ? "0" : "24"} lg:my-0 lg:w-[45%] flex justify-center items-center p-8 border border-secondary bg-black/20`} key={index} isPressable onPress={handlers[item.name]}>
+				<Card shadow="sm" className={`w-[calc(100%-50px)] my-6 mb-${item.name == "create" ? "0" : "24"} lg:my-0 lg:w-[45%] flex justify-center items-center p-8 border border-secondary bg-black/20`} key={index} isPressable={!isLoading} isDisabled={isLoading} onPress={isLoading ? void 0 : handlers[item.name]}>
 					<b className="absolute font-semibold text-5xl capitalize">{item.name} Room</b>
 					<Icon className="w-full h-fit blur-md opacity-20" icon={item.icon} color="white" />
 				</Card>
