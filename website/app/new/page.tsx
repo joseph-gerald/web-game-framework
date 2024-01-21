@@ -98,8 +98,9 @@ export default function Page() {
         }
 
         document.cookie = "token=" + data.token + "; path=/;";
-        window.localStorage.setItem("username", data.username);
         window.localStorage.setItem("token", data.token);
+        
+        window.localStorage.setItem("username", data.username);
 
         router.push("/");
     }

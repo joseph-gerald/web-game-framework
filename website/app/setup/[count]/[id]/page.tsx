@@ -51,7 +51,9 @@ export default function Page({ params }: { params: { id: string, count: string }
     let startedFetch = false;
 
     function setNodeIfNew(key: Set<string>) {
-        const newValue = key.entries().next().value[0];
+        const next = key.entries().next();
+        if (!next.value) return;
+        const newValue = next.value[0];
         if (newValue != node) setNode(newValue);
     }
 
@@ -62,6 +64,8 @@ export default function Page({ params }: { params: { id: string, count: string }
 
         const res = await fetch("/api/servers", { method: "POST" });
         const data = await res.json();
+
+        if (res.status != 200) return router.push("/");
 
         setIsLoading(false);
         setData(data);
@@ -115,8 +119,13 @@ export default function Page({ params }: { params: { id: string, count: string }
                 node: node
             })
         }).then(res => res.json()).then(data => {
-            if (data.success) {
-                router.push("/room/" + data.code);
+            if (data.status == "success") {
+                document.cookie = "key=" + data.key + "; path=/;";
+                window.localStorage.setItem("key", data.key);
+
+                router.push("/play/" + data.code);
+            } else {
+                router.push("/");
             }
         })
     }
@@ -127,6 +136,7 @@ export default function Page({ params }: { params: { id: string, count: string }
             <div className="flex w-full gap-10 mt-10 flex-col lg:flex-row">
                 <div className="w-full">
                     <Table removeWrapper
+                        disabledKeys={isLoading ? data.map((server) => String(server.id)) : []}
                         className={groupClassnames}
                         classNames={tableClassNames}
                         fullWidth={true}
@@ -164,8 +174,9 @@ export default function Page({ params }: { params: { id: string, count: string }
                     <h2 className="font-semibold text-4xl">Room Creator</h2>
                     <br className="mt-8" />
                     <div className="flex flex-col gap-6">
-                        <Input radius="sm" isClearable classNames={inputClassNames} labelPlacement="outside" label="Room Name" placeholder={username + "'s Room"} />
+                        <Input isDisabled={isLoading} radius="sm" isClearable classNames={inputClassNames} labelPlacement="outside" label="Room Name" placeholder={username + "'s Room"} />
                         <Slider
+                            isDisabled={isLoading}
                             classNames={inputClassNames}
                             size="md"
                             step={4}
@@ -182,6 +193,7 @@ export default function Page({ params }: { params: { id: string, count: string }
                             onChange={x => setMaxPlayers(x as number)}
                         />
                         <Select
+                            isDisabled={isLoading}
                             selectedKeys={data.map((server) => String(server.id)).includes(String(node)) ? [node] : []}
                             onSelectionChange={(key) => setNodeIfNew(key as Set<string>)}
                             labelPlacement="outside"
@@ -195,7 +207,7 @@ export default function Page({ params }: { params: { id: string, count: string }
                                 </SelectItem>
                             ))}
                         </Select>
-                        <div className="flex flex-col bg-background rounded-2xl px-12 rounded-b-none">
+                        <div className="flex flex-col bg-background rounded-2xl px-12 rounded-b-none mt-16">
                             <div className="flex flex-col justify-center items-center w-full p-6">
                                 <b className="font-semibold capitalize text-2xl ">Reserved Code</b>
                                 <b className={"font-semibold capitalize text-7xl text-[90px] " + inconsolata.className}>{id}</b>
