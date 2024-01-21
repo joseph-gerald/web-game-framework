@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { Card, Spinner } from "@nextui-org/react";
 import { Icon } from '@iconify/react';
+import { title } from "@/components/primitives";
 import { useRouter } from 'next/navigation'
+import InputCode from "@/components/inputCode";
 
 export default function Home() {
 	const router = useRouter()
@@ -31,26 +33,18 @@ export default function Home() {
 			router.push("/setup/" + data.count + "/" + data.code);
 		},
 		join: async () => {
-			router.push("/join");
+			console.log("join");
 		}
 	}
 
 	return (
-		<section className="flex flex-col lg:flex-row items-center justify-around h-full">
-			{[{
-				name: "create",
-				icon: "fluent:table-add-20-regular"
-			},
-			{
-				name: "join",
-				icon: "material-symbols:fiber-pin-rounded"
-			}].map((item, index) => (
-				<Card shadow="sm" className={`w-[calc(100%-50px)] my-6 mb-${item.name == "create" ? "0" : "24"} lg:my-0 lg:w-[45%] flex justify-center items-center p-8 border border-secondary bg-black/20`} key={index} isPressable={!isLoading} isDisabled={isLoading} onPress={isLoading ? void 0 : handlers[item.name]}>
-					<b className={"absolute font-semibold text-5xl capitalize " + (isLoading ? "hidden" : "")}>{item.name} Room</b>
-					<Icon className="w-full h-fit blur-md opacity-20" icon={item.icon} color="white" />
-					<Spinner size="lg" color="secondary" className={`absolute ${isLoading ? "block" : "hidden"}`} />
-				</Card>
-			))}
+        <section className="px-4 flex flex-col items-center w-full h-full gap-5">
+            <h1 className={"mt-[90px] " + title({ size: "lg" })}>Create Room</h1>
+            
+            <div className="flex w-full gap-10 mt-10 flex-col lg:flex-row">
+                 <InputCode length={4} loading={false} onComplete={() => 0} />
+            </div>
+
 			<h1 className={"font-normal text-xl lg:text-2xl text-default-600 absolute bottom-9 left-1/2 -translate-x-1/2 w-fit"}>{username}</h1>
 		</section>
 	);
