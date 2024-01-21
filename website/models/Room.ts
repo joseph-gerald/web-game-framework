@@ -15,6 +15,12 @@ const scheme = new Schema({
         type: String,
         required: [true, 'Host is required']
     },
+    max_players: {
+        type: Number,
+    },
+    node_uri: {
+        type: String,
+    },
     name: {
         type: String,
     },

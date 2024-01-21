@@ -1,11 +1,11 @@
-import { Poppins } from "next/font/google";
-
 import "@/styles/globals.css";
 import { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import { Providers } from "./providers";
 import clsx from "clsx";
 import { SpeedInsights } from "@vercel/speed-insights/next"
+
+import { poppins } from "./fonts";
 
 export const metadata: Metadata = {
 	title: {
@@ -19,12 +19,6 @@ export const metadata: Metadata = {
 		apple: "/apple-touch-icon.png",
 	},
 };
-
-const poppins = Poppins({
-	weight: ["400","500","600","700","800","900"],
-	subsets: ["latin"],
-	display: "swap"
-})
 
 export default function RootLayout({
 	children,

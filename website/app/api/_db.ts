@@ -8,4 +8,4 @@ client.connect();
 
 mongoose.connect(url);
 
-export default client;
+export { client, mongoose };

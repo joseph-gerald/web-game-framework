@@ -1,7 +1,7 @@
 import tracking_utils from "@/utils/tracking_utils";
 import * as jose from 'jose'
 import { ipAddress } from "@vercel/edge";
-import client from '@/app/api/_db';
+import { client } from '@/app/api/_db';
 
 import Session from "@/models/Session";
 import crypto_utils from "@/utils/crypto_utils";

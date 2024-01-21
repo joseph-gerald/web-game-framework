@@ -21,8 +21,7 @@ export default function Home() {
 			const data = await fetch("/api/room/reserve", {
 				method: "POST",
 				headers: {
-					"Content-Type": "application/json",
-					"Authorization": localStorage.getItem("token") as string
+					"Content-Type": "application/json"
 				}
 			}).then(res => res.json());
 

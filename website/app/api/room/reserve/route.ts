@@ -1,14 +1,15 @@
 import tracking_utils from "@/utils/tracking_utils";
-import client from '@/app/api/_db';
+import { client } from '@/app/api/_db';
 import Room from "@/models/Room";
 import crypto_utils from "@/utils/crypto_utils";
 import game_utils from "@/utils/game_utils";
+import { NextRequest } from "next/server";
 
 client.db("wgf-demo").collection("rooms");
 
-export async function POST(req: Request) {
-    let token = req.headers.get('authorization');
-
+export async function POST(req: NextRequest) {
+    let token = req.cookies.get('token')?.value;
+    
     if (!token) return new Response(JSON.stringify({ error: "Invalid request" }), { status: 400 })
 
     const data = await tracking_utils.readJWT(token);

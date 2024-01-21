@@ -1,11 +1,12 @@
 "use client";
 
+import { inconsolata } from "@/app/fonts";
 import React, { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation'
 import { title } from "@/components/primitives";
 import {
     Table, TableHeader, TableBody, TableColumn, TableRow, TableCell, getKeyValue,
-    Input, Slider, Skeleton, Select, SelectItem
+    Input, Slider, Skeleton, Select, SelectItem, Button
 } from "@nextui-org/react";
 
 const columns = [
@@ -13,9 +14,14 @@ const columns = [
         key: "name",
         label: "NAME",
     },
+    /*
     {
         key: "description",
         label: "DESCRIPTION",
+    },*/
+    {
+        key: "id",
+        label: "ID",
     },
     {
         key: "ping",
@@ -26,7 +32,10 @@ const columns = [
 export default function Page({ params }: { params: { id: string, count: string } }) {
     const { id, count } = params;
 
+    const [maxPlayers, setMaxPlayers] = useState(9);
+
     const router = useRouter()
+    const [node, setNode] = useState("GS_0")
     const [username, setUsername] = useState("");
     const groupClassnames = "flex flex-col p-8 border border-secondary bg-black/40 rounded-2xl w-full h-full"
 
@@ -40,6 +49,11 @@ export default function Page({ params }: { params: { id: string, count: string }
     );
 
     let startedFetch = false;
+
+    function setNodeIfNew(key: Set<string>) {
+        const newValue = key.entries().next().value[0];
+        if (newValue != node) setNode(newValue);
+    }
 
     async function fetchData() {
         if (startedFetch) return;
@@ -88,10 +102,29 @@ export default function Page({ params }: { params: { id: string, count: string }
         [],
     );
 
+    function publishRoom() {
+        setIsLoading(true);
+        fetch("/api/room/publish", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name: document.querySelector("input")?.value || username + "'s Room",
+                max_players: maxPlayers,
+                node: node
+            })
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                router.push("/room/" + data.code);
+            }
+        })
+    }
+
     return (
         <section className="px-4 flex flex-col items-center w-full h-full gap-5">
             <h1 className={"mt-[90px] " + title({ size: "lg" })}>Create Room</h1>
-            <div className="flex w-full gap-10 mt-10">
+            <div className="flex w-full gap-10 mt-10 flex-col lg:flex-row">
                 <div className="w-full">
                     <Table removeWrapper
                         className={groupClassnames}
@@ -100,6 +133,7 @@ export default function Page({ params }: { params: { id: string, count: string }
                         aria-label="Selection behavior table example with dynamic content"
                         selectionMode="single"
                         selectionBehavior="replace"
+                        onRowAction={(key) => setNode(key as string)}
                     >
                         <TableHeader className="bg-red" columns={columns}>
                             {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
@@ -144,10 +178,15 @@ export default function Page({ params }: { params: { id: string, count: string }
                             className="max-w-md"
                             showOutline={true}
                             showTooltip
+                            value={maxPlayers}
+                            onChange={x => setMaxPlayers(x as number)}
                         />
                         <Select
+                            selectedKeys={data.map((server) => String(server.id)).includes(String(node)) ? [node] : []}
+                            onSelectionChange={(key) => setNodeIfNew(key as Set<string>)}
                             labelPlacement="outside"
                             label="Choose Node"
+                            placeholder="Select a Node to host your room"
                             className="max-w-xs"
                         >
                             {data.map((server) => (
@@ -156,9 +195,17 @@ export default function Page({ params }: { params: { id: string, count: string }
                                 </SelectItem>
                             ))}
                         </Select>
+                        <div className="flex flex-col bg-background rounded-2xl px-12 rounded-b-none">
+                            <div className="flex flex-col justify-center items-center w-full p-6">
+                                <b className="font-semibold capitalize text-2xl ">Reserved Code</b>
+                                <b className={"font-semibold capitalize text-7xl text-[90px] " + inconsolata.className}>{id}</b>
+                            </div>
+                        </div>
                     </div>
+                    <Button isLoading={isLoading} className="rounded-t-none" color="secondary" onClick={publishRoom}>Publish Room</Button>
                 </div>
             </div>
+            <br className="mt-8 w-1" />
         </section >
     );
 }
