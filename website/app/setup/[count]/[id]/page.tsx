@@ -70,7 +70,7 @@ export default function Page({ params }: { params: { id: string, count: string }
     useEffect(() => {
         fetchData();
         setUsername(window.localStorage.getItem("username") as string);
-    }, [])
+    })
 
     const tableClassNames = React.useMemo(
         () => ({
