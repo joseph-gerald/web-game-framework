@@ -18,7 +18,13 @@ const scheme = new Schema({
     max_players: {
         type: Number,
     },
+    node_id: {
+        type: String,
+    },
     node_uri: {
+        type: String,
+    },
+    node_name: {
         type: String,
     },
     name: {

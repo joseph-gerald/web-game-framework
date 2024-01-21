@@ -10,12 +10,12 @@ async function pingDatabase(uri: string) {
   const client = new MongoClient(uri);
 
   try {
-    await client.connect();
+      await client.connect();
   } catch (err) {
-    console.error('Failed to connect to MongoDB', err);
-    return;
+      console.error('Failed to connect to MongoDB', err);
+      return;
   } finally {
-    await client.close();
+      await client.close();
   }
 
   const endTime = Date.now();
@@ -27,12 +27,12 @@ async function pingDatabase(uri: string) {
 export async function POST(req: NextRequest) {
   let token = req.cookies.get('token')?.value;
   let key = req.cookies.get('key')?.value;
-  
+
   if (!token || !key) return new Response(JSON.stringify({ error: "Missing Credentials" }), { status: 401 })
 
   const data = {
-      token: await tracking_utils.readJWT(token),
-      key: await tracking_utils.readJWT(key)
+    token: await tracking_utils.readJWT(token),
+    key: await tracking_utils.readJWT(key)
   }
 
   if (!data.token || !data.key) return new Response(JSON.stringify({ error: "Invalid request" }), { status: 401 })
@@ -42,21 +42,25 @@ export async function POST(req: NextRequest) {
 
   if (referredCode !== roomCode) return new Response(JSON.stringify({ error: "Wrong Room" }), { status: 401 })
 
-  const room = await Room.findById(data.key.room.id);
+  try {
+    const room = await Room.findById(data.key.room.id);
 
-  if (!room || room.status == "instantiated") return new Response(JSON.stringify({ error: "Invalid request" }), { status: 404 });
+    if (!room || room.status == "instantiated") return new Response(JSON.stringify({ error: "Invalid request" }), { status: 404 });
 
-  const servers = game_utils.servers;
-  const pingData = await Promise.all(servers.map(async (server) => {
-    const ping = await pingDatabase(server.uri);
+    const servers = game_utils.servers;
+    const pingData = await Promise.all(servers.map(async (server) => {
+      const ping = await pingDatabase(server.uri);
 
-    return {
-      name: server.name,
-      description: server.description,
-      id: server.id,
-      ping: ping + " ms"
-    };
-  }));
+      return {
+        name: server.name,
+        description: server.description,
+        id: server.id,
+        ping: ping + " ms"
+      };
+    }));
 
-  return new Response(JSON.stringify(pingData))
+    return new Response(JSON.stringify(pingData))
+  } catch (_) {
+    return new Response(JSON.stringify({ error: "Failed to contact database" }), { status: 500 });
+  }
 }

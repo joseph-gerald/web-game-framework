@@ -29,7 +29,9 @@ export async function POST(req: NextRequest) {
 
     room.name = name;
     room.max_players = max_players;
+    room.node_id = node;
     room.node_uri = game_utils.servers[parseInt(node.replace("GS_", ""))].uri;
+    room.node_name = game_utils.servers[parseInt(node.replace("GS_", ""))].name;
 
     room.status = "instantiated";
 
