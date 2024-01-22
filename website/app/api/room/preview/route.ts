@@ -17,8 +17,6 @@ export async function POST(req: Request) {
 
     if (room.status == "uninstantiated") return new Response(JSON.stringify({ error: "Room not published" }), { status: 400 });
 
-    console.log(room);
-
     return new Response(JSON.stringify({ 
         name: room.name,
         max_players: room.max_players,

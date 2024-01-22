@@ -7,7 +7,7 @@ import { Message, ChatMessage } from "./components/message";
 
 export default function Page({ params }: { params: { id: string } }) {
     const router = useRouter();
-    const minPollingRate = 1000;
+    const minPollingRate = 100;
 
     const [roomState, setRoomState] = useState({
         id: -1,

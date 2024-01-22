@@ -35,6 +35,29 @@ export default function Home() {
 
     const pingStyle = "bg-clip-text text-transparent bg-gradient-to-b from-secondary to-primary";
 
+    async function join() {
+        const res = await fetch("/api/room/join", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                code: data.code,
+            })
+        });
+
+        const json = await res.json();
+
+        console.log(json);
+
+        if (res.status != 200) return;
+
+        document.cookie = "key=" + json.key + "; path=/;";
+        window.localStorage.setItem("key", json.key);
+
+        router.push("/play/" + data.code);
+    }
+
     const fetchRoom = async (code: string) => {
         setCanJoin(false)
         let res = await fetch("/api/room/preview", {
@@ -125,7 +148,7 @@ export default function Home() {
                             </div>
 
                             <div className="flex flex-col justify-between">
-                                <Button isDisabled={!canJoin} className="font-bold text-xl bg-primary/40 w-fit ml-auto">
+                                <Button onClick={join} isDisabled={!canJoin} className="font-bold text-xl bg-primary/40 w-fit ml-auto">
                                     JOIN
                                 </Button>
 
