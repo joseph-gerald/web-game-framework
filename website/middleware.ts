@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
   const sessionValidation = await validateSession(request, token, initial);
   const roomKeyValidation = await validateRoomKey(request, key, token);
 
-  if (initial) console.log(sessionValidation, roomKeyValidation)
+  //if (initial) console.log(sessionValidation, roomKeyValidation)
 
   if (sessionValidation) return sessionValidation;
   if (roomKeyValidation) return roomKeyValidation;
@@ -43,7 +43,7 @@ async function validateRoomKey(request: NextRequest, key: RequestCookie | undefi
 
 async function validateSession(request: NextRequest, token: RequestCookie | undefined, initial: boolean) {
   if (!token && !request.url.includes('/new') && initial) {
-    if (game_utils.DEBUG) console.log(request.url, initial)
+    //if (game_utils.DEBUG) console.log(request.url, initial)
 
     if (request.method === "POST") return NextResponse.error();
 
@@ -53,8 +53,6 @@ async function validateSession(request: NextRequest, token: RequestCookie | unde
   if (!token?.value) return;
 
   const data = await tracking_utils.readJWT(token.value);
-
-  if (game_utils.DEBUG) console.log(data)
 
   if (data) {
     if (request.url.includes('/new') && token) return NextResponse.redirect(new URL('/', request.url))

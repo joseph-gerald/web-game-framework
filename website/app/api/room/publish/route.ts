@@ -1,9 +1,10 @@
 import tracking_utils from "@/utils/tracking_utils";
-import { client } from '@/app/api/_db';
+import { client, mongoose } from '@/app/api/_db';
 import Room from "@/models/Room";
 import { NextRequest } from "next/server";
 import game_utils from "@/utils/game_utils";
 import crypto_utils from "@/utils/crypto_utils";
+import State from "@/models/State";
 
 client.db("wgf-demo").collection("rooms");
 
@@ -37,7 +38,21 @@ export async function POST(req: NextRequest) {
 
     room.save();
 
+    mongoose.connect(room.node_uri);
+
+    const state = new State({
+        room_id: room._id,
+        room_host: data.key.user,
+        state: {
+            last_update: Date.now(),
+            id: 0,
+        }
+    });
+
+    state.save();
+
     data.key.room.node = node;
+    data.key.room.state = state._id;
 
     const roomKey = await crypto_utils.jwtSign(data.key);
 

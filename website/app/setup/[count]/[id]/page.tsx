@@ -123,7 +123,7 @@ export default function Page({ params }: { params: { id: string, count: string }
                 document.cookie = "key=" + data.key + "; path=/;";
                 window.localStorage.setItem("key", data.key);
 
-                router.push("/play/" + data.code);
+                router.push("/play/" + id);
             } else {
                 router.push("/");
             }
