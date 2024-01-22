@@ -13,21 +13,36 @@ export default function Page({ params }: { params: { id: string } }) {
         id: -1,
         lastUpdate: Date.now()
     } as any);
-    const [messages, setMessages] = useState([] as any[]);
-    const [queue, setQueue] = useState([] as any[]);
+
     const [textValue, setTextValue] = useState('');
-    const [persistentEventProcessor, setPersistentEventProcessor] = useState({} as any);
+    const [persistentEventProcessor, setPersistentEventProcessor] = useState({
+        state: {
+            id: -1,
+            lastUpdate: Date.now()
+        },
+        messages: [
+            {
+                id: -1,
+                time: new Date().toTimeString().slice(0, 5),
+                type: "light_italic_yellow",
+                content: "Joining room " + params.id
+            }
+        ] as any[],
+        queue: [] as any[],
+        sync: async () => { },
+        process: async (event: any) => { }
+    } as any);
 
     const handleKeyDown = (event: any) => {
         if (event.key === 'Enter') {
-            console.log(textValue);
+            console.log("SENDING MESSAGE: " + textValue);
 
             setPersistentEventProcessor({
                 ...persistentEventProcessor,
                 queue: [...persistentEventProcessor.queue, {
-                    type: "chat",
+                    target: "chat",
                     data: {
-                        content: textValue
+                        message: textValue
                     }
                 }]
             })
@@ -50,6 +65,7 @@ export default function Page({ params }: { params: { id: string } }) {
         queue: [],
         sync: async () => {
             for (const key of Object.keys(persistentEventProcessor)) {
+                if ("process" == key) continue;
                 eventProcessor[key as keyof typeof eventProcessor] = persistentEventProcessor[key];
             }
 
@@ -57,7 +73,7 @@ export default function Page({ params }: { params: { id: string } }) {
                 method: "POST",
                 body: JSON.stringify({
                     state_id: roomState.id,
-                    queue: queue
+                    queue: eventProcessor.queue
                 })
             })
 
@@ -78,7 +94,7 @@ export default function Page({ params }: { params: { id: string } }) {
             eventProcessor.state.id = data.state_id;
 
             for (const event of data.events) {
-                eventProcessor.process(event);
+                eventProcessor.process(event, eventProcessor);
             }
 
             const timeSinceSync = Date.now() - roomState.lastUpdate;
@@ -87,25 +103,36 @@ export default function Page({ params }: { params: { id: string } }) {
 
             eventProcessor.state.lastUpdate = Date.now();
 
-            setMessages(eventProcessor.messages);
+            console.log(eventProcessor.queue);
+            eventProcessor.queue = [];
+
             setRoomState(eventProcessor.state);
-            setQueue(eventProcessor.queue);
-
             setPersistentEventProcessor(eventProcessor)
-
-            console.log(eventProcessor.state);
         },
-        process: async (event: any) => {
+        process: (event: any, eventProcessor: any) => {
+            console.log(event);
+            const timestamp = new Date().toTimeString().slice(0, 5);
             switch (event.type) {
                 case "message":
-                    const timestamp = new Date().toTimeString().slice(0, 5);
-
                     eventProcessor.messages.push({
                         id: event.id,
                         time: timestamp,
                         ...event.data
                     });
                     break;
+                case "chat":
+                    console.log(event);
+                    eventProcessor.messages.push({
+                        chat: true,
+                        id: event.id,
+                        time: timestamp,
+                        content: event.data.message,
+                        sender: event.data.sender
+                    });
+                    break;
+                default:
+                    console.warn("Unknown event type: " + event.type);
+                    console.info(event);
             }
         }
     }
@@ -129,16 +156,13 @@ export default function Page({ params }: { params: { id: string } }) {
             <div className="rounded-2xl bg-black/20 border border-secondary p-4 flex flex-col gap-3 h-full w-96">
                 <div className="bg-black/20 p-4 py-2 rounded-2xl h-full" suppressHydrationWarning>
                     {
-                        messages.length == 0 ?
-                            (<Message time={new Date().toTimeString().slice(0, 5)} type="light_italic_yellow" content={"Joining room " + params.id} />)
-                            :
-                            messages.map((message: any) => {
-                                return message.chat ? (
-                                    <ChatMessage key={message.id} time={message.time} sender={message.sender} content={message.content} />
-                                ) : (
-                                    <Message key={message.id} time={message.time} type={message.type} content={message.content} />
-                                );
-                            })
+                        persistentEventProcessor.messages.map((message: any) => {
+                            return message.chat ? (
+                                <ChatMessage key={message.id} time={message.time} sender={message.sender} content={message.content} />
+                            ) : (
+                                <Message key={message.id} time={message.time} type={message.type} content={message.content} />
+                            );
+                        })
                     }
                 </div>
                 <div>

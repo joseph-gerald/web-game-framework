@@ -34,9 +34,12 @@ export async function POST(req: NextRequest) {
     room.node_uri = game_utils.servers[parseInt(node.replace("GS_", ""))].uri;
     room.node_name = game_utils.servers[parseInt(node.replace("GS_", ""))].name;
 
-    room.status = "instantiated";
+    room.status = "idle";
 
-    room.save();
+    await Room.findOneAndUpdate(
+        { _id: data.key.room.id },
+        room
+    );
 
     connection.close();
     connection = await mongoose.createConnection(room.node_uri);
@@ -48,7 +51,8 @@ export async function POST(req: NextRequest) {
         state: {
             last_update: Date.now(),
             id: 0,
-        }
+        },
+        records: {}
     });
 
     await state.save();

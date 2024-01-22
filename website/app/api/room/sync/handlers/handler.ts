@@ -3,5 +3,5 @@ export default abstract class {
 
     constructor(name: string) { this.name = name }
 
-    abstract handle(state: any, queue: any): void;
+    abstract handle(data: any, state: any, queue: any): void;
 }

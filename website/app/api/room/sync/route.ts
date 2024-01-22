@@ -32,12 +32,29 @@ export async function POST(req: NextRequest) {
     const State: any = connection.model("State", state_model.Schema);
     const state = await State.findById(data.key.room.state);
 
-    console.log(data.key.room.state)
+    if (!state) return new Response(JSON.stringify({ error: "Could not find room" }), { status: 404 });
 
     state.state.id++;
-    state.state.records ??= [];
+    state.records ??= {};
+    
+    const newRecord = [];
 
-    for (const handler of handlers)  handler.handle(state.state, queue.filter((event: any) => event.target == handler.name));
+    for (const handler of handlers) newRecord.push(...handler.handle(data, state, queue.filter((event: any) => event.target == handler.name)));
+
+    const filtered = newRecord.filter((x: any) => x != null);
+
+    if (filtered.length != 0) {
+        state.records[state.state.id] = filtered;
+    }
+
+    for (const [key, value] of Object.entries(state.records)) {
+        if (state_id != -1 && key > state_id) {
+            for (const event of value as any) {
+                // TODO: Implement visibility
+                if (event.visibility == "public") events.push({...event, origin_id: key, id: key + "_" + Math.random().toString(36).substring(2, 2 + 6).toUpperCase()});
+            }
+        }
+    }
 
     await State.findOneAndUpdate(
         { _id: data.key.room.state },

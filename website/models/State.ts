@@ -15,6 +15,10 @@ const scheme = new Schema({
         type: Object,
         required: [true, 'State is required']
     },
+    records: {
+        type: Object,
+        required: [true, 'Records is required']
+    },
 }, {
     timestamps: true
 })
