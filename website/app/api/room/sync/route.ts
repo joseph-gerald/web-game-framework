@@ -1,8 +1,7 @@
 import tracking_utils from "@/utils/tracking_utils";
-import State from "@/models/State";
+import state_model from "@/models/State";
 import { NextRequest } from "next/server";
 import mongoose from 'mongoose';
-import { MongoClient } from "mongodb";
 import game_utils from "@/utils/game_utils";
 
 export async function POST(req: NextRequest) {
@@ -23,15 +22,12 @@ export async function POST(req: NextRequest) {
     const events: any[] = [];
 
     const url = game_utils.servers[parseInt(data.key.room.node.replace("GS_", ""))].uri;
-    const client = new MongoClient(url);
 
-    client.connect();
+    const connection = await mongoose.createConnection(url);
 
-    mongoose.connect(url);
-
-    client.db("master").collection("states");
-
+    const State: any = connection.model("State", state_model.Schema);
     const state = await State.findById(data.key.room.state);
+
     state.state.id++;
 
     await State.findOneAndUpdate(
@@ -40,8 +36,12 @@ export async function POST(req: NextRequest) {
         { new: true, upsert: true }
     );
 
-    return new Response(JSON.stringify({
+    const payload = {
         state_id: state.state.id,
         events
-    }));
+    };
+
+    connection.close();
+
+    return new Response(JSON.stringify(payload));
 }

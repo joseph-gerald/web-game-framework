@@ -28,4 +28,7 @@ try {
     State = mongoose.model('State', scheme);
 }
 
-export default State as any;
+export default {
+    Schema: scheme,
+    Model: State
+};

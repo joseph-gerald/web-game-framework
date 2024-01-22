@@ -4,7 +4,7 @@ import Room from "@/models/Room";
 import { NextRequest } from "next/server";
 import game_utils from "@/utils/game_utils";
 import crypto_utils from "@/utils/crypto_utils";
-import State from "@/models/State";
+import state_model from "@/models/State";
 
 client.db("wgf-demo").collection("rooms");
 
@@ -38,8 +38,9 @@ export async function POST(req: NextRequest) {
 
     room.save();
 
-    mongoose.connect(room.node_uri);
+    const connection = await mongoose.createConnection(room.node_uri);
 
+    const State: any = connection.model("State", state_model.Schema);
     const state = new State({
         room_id: room._id,
         room_host: data.key.user,
@@ -50,6 +51,8 @@ export async function POST(req: NextRequest) {
     });
 
     state.save();
+
+    connection.close();
 
     data.key.room.node = node;
     data.key.room.state = state._id;
