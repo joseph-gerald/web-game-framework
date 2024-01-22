@@ -1,10 +1,11 @@
 import tracking_utils from "@/utils/tracking_utils";
 import { client } from '@/app/api/_db';
-import Room from "@/models/Room";
+import room_model from "@/models/Room";
 import crypto_utils from "@/utils/crypto_utils";
 import game_utils from "@/utils/game_utils";
 import { NextRequest } from "next/server";
 
+client.connect();
 client.db("wgf-demo").collection("rooms");
 
 export async function POST(req: NextRequest) {
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
         code = Math.random().toString(36).substring(2, 6).toUpperCase();
     }
 
-    const room = new Room({
+    const room = new room_model.Model({
         code,
         status: "uninstantiated",
         host: session,

@@ -4,6 +4,10 @@ import { NextRequest } from "next/server";
 import mongoose from 'mongoose';
 import game_utils from "@/utils/game_utils";
 
+const handlers = [
+    new ((await (import ("./handlers/chat_handler"))).default)(),
+]
+
 export async function POST(req: NextRequest) {
     let token = req.cookies.get('token')?.value;
     let key = req.cookies.get('key')?.value;
@@ -28,7 +32,12 @@ export async function POST(req: NextRequest) {
     const State: any = connection.model("State", state_model.Schema);
     const state = await State.findById(data.key.room.state);
 
+    console.log(data.key.room.state)
+
     state.state.id++;
+    state.state.records ??= [];
+
+    for (const handler of handlers)  handler.handle(state.state, queue.filter((event: any) => event.target == handler.name));
 
     await State.findOneAndUpdate(
         { _id: data.key.room.state },

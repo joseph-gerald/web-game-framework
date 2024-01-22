@@ -9,26 +9,71 @@ export default function Page({ params }: { params: { id: string } }) {
     const router = useRouter();
     const minPollingRate = 1000;
 
-    const [roomState, setRoomState] = useState({} as any);
+    const [roomState, setRoomState] = useState({
+        id: -1,
+        lastUpdate: Date.now()
+    } as any);
+    const [messages, setMessages] = useState([] as any[]);
+    const [queue, setQueue] = useState([] as any[]);
+    const [textValue, setTextValue] = useState('');
+    const [persistentEventProcessor, setPersistentEventProcessor] = useState({} as any);
+
+    const handleKeyDown = (event: any) => {
+        if (event.key === 'Enter') {
+            console.log(textValue);
+
+            setPersistentEventProcessor({
+                ...persistentEventProcessor,
+                queue: [...persistentEventProcessor.queue, {
+                    type: "chat",
+                    data: {
+                        content: textValue
+                    }
+                }]
+            })
+
+            setTextValue('');
+        }
+    };
 
     const eventProcessor = {
         state: {
             id: -1,
             lastUpdate: Date.now()
         },
+        messages: [{
+            id: -1,
+            time: new Date().toTimeString().slice(0, 5),
+            type: "light_italic_yellow",
+            content: "Joining room " + params.id
+        }] as any[],
         queue: [],
         sync: async () => {
+            for (const key of Object.keys(persistentEventProcessor)) {
+                eventProcessor[key as keyof typeof eventProcessor] = persistentEventProcessor[key];
+            }
+
             const res = await fetch("/api/room/sync", {
                 method: "POST",
                 body: JSON.stringify({
-                    state_id: eventProcessor.state.id,
-                    queue: eventProcessor.queue
+                    state_id: roomState.id,
+                    queue: queue
                 })
             })
+
             const data = await res.json();
 
 
             if (res.status != 200) return router.push("/");
+
+            if (roomState.id == -1) {
+                eventProcessor.messages.push({
+                    id: 0,
+                    time: new Date().toTimeString().slice(0, 5),
+                    type: "medium_italic_green",
+                    content: "Joined " + params.id,
+                });
+            }
 
             eventProcessor.state.id = data.state_id;
 
@@ -36,21 +81,36 @@ export default function Page({ params }: { params: { id: string } }) {
                 eventProcessor.process(event);
             }
 
-            const timeSinceSync = Date.now() - eventProcessor.state.lastUpdate;
+            const timeSinceSync = Date.now() - roomState.lastUpdate;
 
             if (timeSinceSync < minPollingRate) await new Promise((resolve) => setTimeout(resolve, minPollingRate - timeSinceSync));
 
-            setRoomState(eventProcessor.state);
             eventProcessor.state.lastUpdate = Date.now();
+
+            setMessages(eventProcessor.messages);
+            setRoomState(eventProcessor.state);
+            setQueue(eventProcessor.queue);
+
+            setPersistentEventProcessor(eventProcessor)
 
             console.log(eventProcessor.state);
         },
         process: async (event: any) => {
+            switch (event.type) {
+                case "message":
+                    const timestamp = new Date().toTimeString().slice(0, 5);
 
+                    eventProcessor.messages.push({
+                        id: event.id,
+                        time: timestamp,
+                        ...event.data
+                    });
+                    break;
+            }
         }
     }
 
-    useEffect(() => { eventProcessor.sync() }, [roomState]);
+    useEffect(() => { eventProcessor.sync() }, [persistentEventProcessor]);
 
     return (
         <section className="absolute left-0 flex flex-row items-center justify-center h-full w-full gap-5 p-6">
@@ -64,14 +124,22 @@ export default function Page({ params }: { params: { id: string } }) {
                 <div className="w-full flex items-center justify-center">
                     <h1 className="text-5xl font-bold text-white/50">Waiting for host to start</h1>
                 </div>
-                <h1 className="text-5xl font-bold text-white/50">3DWR</h1>
+                <h1 className="text-5xl font-bold text-white/50">{params.id}</h1>
             </div>
             <div className="rounded-2xl bg-black/20 border border-secondary p-4 flex flex-col gap-3 h-full w-96">
-                <div className="bg-black/20 p-4 py-2 rounded-2xl h-full">
-                    <Message time="21:54" type="light_italic_yellow" content="Joining room 3DWR" />
-                    <Message time="21:54" type="medium_italic_green" content="Joined 3DWR" />
-                    <Message time="21:56" type="bold_gray" content="Player3 has joined" />
-                    <ChatMessage time="21:57" sender="Player3" content="Hello everyone" />
+                <div className="bg-black/20 p-4 py-2 rounded-2xl h-full" suppressHydrationWarning>
+                    {
+                        messages.length == 0 ?
+                            (<Message time={new Date().toTimeString().slice(0, 5)} type="light_italic_yellow" content={"Joining room " + params.id} />)
+                            :
+                            messages.map((message: any) => {
+                                return message.chat ? (
+                                    <ChatMessage key={message.id} time={message.time} sender={message.sender} content={message.content} />
+                                ) : (
+                                    <Message key={message.id} time={message.time} type={message.type} content={message.content} />
+                                );
+                            })
+                    }
                 </div>
                 <div>
                     <Input classNames={{
@@ -86,7 +154,11 @@ export default function Page({ params }: { params: { id: string } }) {
                             "!bg-black/20",
                             "!cursor-text",
                         ],
-                    }} placeholder="Send /help to see commands"></Input>
+                    }}
+                        value={textValue}
+                        onValueChange={setTextValue}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Send /help to see commands"></Input>
                 </div>
             </div>
         </section >

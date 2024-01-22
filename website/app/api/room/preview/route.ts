@@ -1,6 +1,6 @@
 import tracking_utils from "@/utils/tracking_utils";
 import { client } from '@/app/api/_db';
-import Room from "@/models/Room";
+import room_model from "@/models/Room";
 
 client.db("wgf-demo").collection("rooms");
 
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     
     const { code } = await req.json();
 
-    const room = await Room.findOne({ code });
+    const room = await room_model.Model.findOne({ code });
 
     if (!room) return new Response(JSON.stringify({ error: "Found No Room With Code" }), { status: 404 });
 

@@ -46,4 +46,7 @@ try {
     Room = mongoose.model('Room', scheme);
 }
 
-export default Room as any;
+export default {
+    Schema: scheme,
+    Model: Room as any
+};

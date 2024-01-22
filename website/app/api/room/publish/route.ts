@@ -1,12 +1,10 @@
 import tracking_utils from "@/utils/tracking_utils";
-import { client, mongoose } from '@/app/api/_db';
-import Room from "@/models/Room";
+import { mongoose } from '@/app/api/_db';
+import room_model from "@/models/Room";
 import { NextRequest } from "next/server";
 import game_utils from "@/utils/game_utils";
 import crypto_utils from "@/utils/crypto_utils";
 import state_model from "@/models/State";
-
-client.db("wgf-demo").collection("rooms");
 
 export async function POST(req: NextRequest) {
     let token = req.cookies.get('token')?.value;
@@ -23,6 +21,8 @@ export async function POST(req: NextRequest) {
 
     const { name, max_players, node } = await req.json();
 
+    let connection = await mongoose.createConnection(process.env.MONGODB_URI as string);
+    const Room: any = connection.model("Room", room_model.Schema);
     const room = await Room.findById(data.key.room.id);
 
     if (!room) return new Response(JSON.stringify({ error: "Invalid request" }), { status: 404 });
@@ -38,7 +38,8 @@ export async function POST(req: NextRequest) {
 
     room.save();
 
-    const connection = await mongoose.createConnection(room.node_uri);
+    connection.close();
+    connection = await mongoose.createConnection(room.node_uri);
 
     const State: any = connection.model("State", state_model.Schema);
     const state = new State({
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
         }
     });
 
-    state.save();
+    await state.save();
 
     connection.close();
 

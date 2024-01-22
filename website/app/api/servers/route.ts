@@ -1,4 +1,4 @@
-import Room from '@/models/Room';
+import room_model from '@/models/Room';
 import game_utils from '@/utils/game_utils';
 import tracking_utils from '@/utils/tracking_utils';
 import { MongoClient } from 'mongodb';
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   if (referredCode !== roomCode) return new Response(JSON.stringify({ error: "Wrong Room" }), { status: 401 })
 
   try {
-    const room = await Room.findById(data.key.room.id);
+    const room = await room_model.Model.findById(data.key.room.id);
 
     if (!room || room.status == "instantiated") return new Response(JSON.stringify({ error: "Invalid request" }), { status: 404 });
 
