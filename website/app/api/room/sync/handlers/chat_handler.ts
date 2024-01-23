@@ -9,16 +9,18 @@ export default class extends handler {
 
         const events: any[] = [];
 
+
         for (const event of queue) {
-            events.push({
-                type: "chat",
-                visibility: "public",
-                data: {
+            if (event.data.message.length == 0) continue;
+            console.log(event);
+
+            events.push(
+                this.createEvent("chat", "public", {
                     message: event.data.message,
                     sender: data.token.username,
                     timestamp: event.data.timestamp
-                }
-            });
+                })
+            );
         }
 
         return events;

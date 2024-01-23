@@ -7,12 +7,7 @@ import { Message, ChatMessage } from "./components/message";
 
 export default function Page({ params }: { params: { id: string } }) {
     const router = useRouter();
-    const minPollingRate = 100;
-
-    const [roomState, setRoomState] = useState({
-        id: -1,
-        lastUpdate: Date.now()
-    } as any);
+    const minPollingRate = 25;
 
     const [textValue, setTextValue] = useState('');
     const [persistentEventProcessor, setPersistentEventProcessor] = useState({
@@ -34,9 +29,7 @@ export default function Page({ params }: { params: { id: string } }) {
     } as any);
 
     const handleKeyDown = (event: any) => {
-        if (event.key === 'Enter') {
-            console.log("SENDING MESSAGE: " + textValue);
-
+        if (event.key === 'Enter' && textValue != "") {
             setPersistentEventProcessor({
                 ...persistentEventProcessor,
                 queue: [...persistentEventProcessor.queue, {
@@ -54,6 +47,7 @@ export default function Page({ params }: { params: { id: string } }) {
     const eventProcessor = {
         state: {
             id: -1,
+            pollId: -1,
             lastUpdate: Date.now()
         },
         messages: [{
@@ -63,11 +57,26 @@ export default function Page({ params }: { params: { id: string } }) {
             content: "Joining room " + params.id
         }] as any[],
         queue: [],
+        handledHashes: {},
+        poll: true,
         sync: async () => {
             for (const key of Object.keys(persistentEventProcessor)) {
                 if ("process" == key) continue;
                 eventProcessor[key as keyof typeof eventProcessor] = persistentEventProcessor[key];
             }
+
+            const roomState = eventProcessor.state;
+
+            if (!eventProcessor.poll) {
+                return;
+            }
+
+            if (roomState.id == eventProcessor.state.pollId) {
+                console.log("Dupe poll, skipping");
+            }
+
+            eventProcessor.state.pollId = roomState.id;
+            eventProcessor.poll = false;
 
             const res = await fetch("/api/room/sync", {
                 method: "POST",
@@ -103,15 +112,27 @@ export default function Page({ params }: { params: { id: string } }) {
 
             eventProcessor.state.lastUpdate = Date.now();
 
-            console.log(eventProcessor.queue);
+            //|console.log(eventProcessor.queue);
             eventProcessor.queue = [];
 
-            setRoomState(eventProcessor.state);
-            setPersistentEventProcessor(eventProcessor)
+            setPersistentEventProcessor({ ...eventProcessor, poll: true })
         },
         process: (event: any, eventProcessor: any) => {
-            console.log(event);
             const timestamp = new Date().toTimeString().slice(0, 5);
+
+            if (eventProcessor.handledHashes[event.hash]) {
+                console.log("Dupe event, skipping");
+                return;
+            }
+
+            eventProcessor.handledHashes[event.hash] = event.id;
+
+            // Dont eat up memory
+            for (const key of Object.keys(persistentEventProcessor)) {
+                const eventId = persistentEventProcessor[key];
+                if (eventProcessor - eventId > 100) delete persistentEventProcessor[key];
+            }
+
             switch (event.type) {
                 case "message":
                     eventProcessor.messages.push({
@@ -121,10 +142,10 @@ export default function Page({ params }: { params: { id: string } }) {
                     });
                     break;
                 case "chat":
-                    console.log(event);
+                    console.info("CHAT EVENT", event);
                     eventProcessor.messages.push({
                         chat: true,
-                        id: event.id,
+                        id: event.hash,
                         time: timestamp,
                         content: event.data.message,
                         sender: event.data.sender
@@ -154,7 +175,7 @@ export default function Page({ params }: { params: { id: string } }) {
                 <h1 className="text-5xl font-bold text-white/50">{params.id}</h1>
             </div>
             <div className="rounded-2xl bg-black/20 border border-secondary p-4 flex flex-col gap-3 h-full w-96">
-                <div className="bg-black/20 p-4 py-2 rounded-2xl h-full" suppressHydrationWarning>
+                <div className="bg-black/20 p-4 py-2 rounded-2xl h-full overflow-y-scroll" suppressHydrationWarning>
                     {
                         persistentEventProcessor.messages.map((message: any) => {
                             return message.chat ? (
