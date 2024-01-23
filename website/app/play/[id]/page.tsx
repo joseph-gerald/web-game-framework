@@ -7,7 +7,7 @@ import { Message, ChatMessage } from "./components/message";
 
 export default function Page({ params }: { params: { id: string } }) {
     const router = useRouter();
-    const minPollingRate = 25;
+    const minPollingRate = 10;
 
     const [textValue, setTextValue] = useState('');
     const [persistentEventProcessor, setPersistentEventProcessor] = useState({
@@ -71,10 +71,6 @@ export default function Page({ params }: { params: { id: string } }) {
                 return;
             }
 
-            if (roomState.id == eventProcessor.state.pollId) {
-                console.log("Dupe poll, skipping");
-            }
-
             eventProcessor.state.pollId = roomState.id;
             eventProcessor.poll = false;
 
@@ -82,7 +78,8 @@ export default function Page({ params }: { params: { id: string } }) {
                 method: "POST",
                 body: JSON.stringify({
                     state_id: roomState.id,
-                    queue: eventProcessor.queue
+                    queue: eventProcessor.queue,
+                    hashes: eventProcessor.handledHashes
                 })
             })
 

@@ -16,7 +16,7 @@ const scheme = new Schema({
         required: [true, 'State is required']
     },
     records: {
-        type: Object,
+        type: Array,
         required: [true, 'Records is required']
     },
 }, {

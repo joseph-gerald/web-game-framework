@@ -19,9 +19,9 @@ export async function POST(req: NextRequest) {
         key: await tracking_utils.readJWT(key)
     }
 
-    const { queue, state_id } = await req.json();
+    const { queue, state_id, hashes } = await req.json();
 
-    if (!data.token || !data.key || !queue || !state_id) return new Response(JSON.stringify({ error: "Invalid request" }), { status: 401 })
+    if (!data.token || !data.key || !queue || !state_id || !hashes) return new Response(JSON.stringify({ error: "Invalid request" }), { status: 401 })
 
     const events: any[] = [];
 
@@ -34,12 +34,11 @@ export async function POST(req: NextRequest) {
     let start = Date.now();
 
     const state = await State.findById(new mongoose.Types.ObjectId(data.key.room.state)).select('state records').lean();
-    console.log(`[SYNC] Fetched state in ${Date.now() - start}ms`);
+    //console.log(`[SYNC] Fetched state in ${Date.now() - start}ms`);
 
 
     if (!state) return new Response(JSON.stringify({ error: "Could not find room" }), { status: 404 });
 
-    state.state.id++;
     state.records ??= {};
 
     const newRecord = [];
@@ -48,31 +47,47 @@ export async function POST(req: NextRequest) {
 
     const filtered = newRecord.filter((x: any) => x != null);
 
-    if (filtered.length != 0) {
-        state.records[state.state.id] = filtered;
+    for (const [key, record] of ([...state.records as any, ...filtered as any] as any).entries()) {
+        if (key == 0) continue; 
+        if (state_id != -1 && key >= (state_id)) {
+            // TODO: Implement visibility
+            if (record.hash in hashes) {
+                //console.log(`[SYNC] Skipping event ${record.hash} from ${data.token.username}`)
+                continue;
+            }
+            if (record.visibility == "public") events.push({ ...record, id: key });
+        }
     }
 
-    for (const [key, value] of Object.entries(state.records)) {
-        if (state_id != -1 && key > state_id) {
-            for (const event of value as any) {
-                // TODO: Implement visibility
-                if (event.visibility == "public") events.push({ ...event, id: key });
+    if (filtered.length != 0) {
+        const update = {
+            $push: {
+                'records': {
+                    $each: filtered
+                }
+            },
+            $inc: {
+                'state.id': 1
+            },
+            $set: {
+                'state.last_update': Date.now() // Set the last_update time
             }
-        }
+        };
+    
+        // Perform the update
+        await State.updateOne(
+            { _id: data.key.room.state },
+            update,
+            { upsert: true }
+        );
+
+        state.state.id++;
     }
 
     start = Date.now();
 
-    await State.findOneAndUpdate(
-        { _id: data.key.room.state },
-        state,
-        { new: true, upsert: true }
-    );
-
-    //console.log(`[SYNC] Updated state in ${Date.now() - start}ms`);
-
     const payload = {
-        state_id: state.state.id,
+        state_id: state.state.id + 1,
         events
     };
 
