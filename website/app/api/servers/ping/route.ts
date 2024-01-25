@@ -25,14 +25,16 @@ async function pingDatabase(uri: string) {
 export async function POST(req: NextRequest) {
     const { id } = await req.json();
 
-    console.log(id)
+    try {
+        const servers = game_utils.servers;
+        const uri = servers[parseInt(id.replace("GS_", ""))].uri;
 
-    const servers = game_utils.servers;
-    const uri = servers[parseInt(id.replace("GS_", ""))].uri;
-
-    const ping = await pingDatabase(uri);
-
-    return new Response(JSON.stringify({
-        ping: ping
-    }))
+        const ping = await pingDatabase(uri);
+    
+        return new Response(JSON.stringify({
+            ping: ping
+        }))
+    } catch (err) {
+        return new Response(JSON.stringify({ error: "Invalid server" }), { status: 404 });
+    }
 }

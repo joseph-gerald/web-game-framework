@@ -148,6 +148,14 @@ export default function Page({ params }: { params: { id: string } }) {
                         sender: event.data.sender
                     });
                     break;
+                case "join":
+                    eventProcessor.messages.push({
+                        id: event.id,
+                        time: new Date().toTimeString().slice(0, 5),
+                        type: "bold_gray",
+                        content: event.data.username + " joined the room",
+                    });
+                    break;
                 default:
                     console.warn("Unknown event type: " + event.type);
                     console.info(event);

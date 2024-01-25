@@ -31,6 +31,36 @@ export async function POST(req: NextRequest) {
 
     const State: any = connection.model("State", state_model.Schema);
     const state = await State.findOne({ room_id: room._id });
+
+    const date = Date.now();
+
+    const update = {
+        $push: {
+            'records': {
+                type: "join",
+                visibility: "public",
+                timestamp: date,
+                hash: crypto_utils.sha1(JSON.stringify(data) + "joinpublic" + date).substring(0, 6),
+                data: data.token
+            }
+        },
+        $inc: {
+            'state.id': 1
+        },
+        $set: {
+            'state.last_update': Date.now()
+        }
+    };
+
+    // Perform the update
+    await State.updateOne(
+        { _id: state._id },
+        update,
+        { upsert: true }
+    );
+
+    state.state.id++;
+
     connection.close();
 
     const key = await crypto_utils.jwtSign({
