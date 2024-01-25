@@ -68,6 +68,9 @@ export default function Home() {
     const fetchRoom = async (code: string) => {
         setCanJoin(false)
         setIsLoaded(false)
+
+        const prePreview = Date.now();
+
         let res = await fetch("/api/room/preview", {
             method: "POST",
             headers: {
@@ -78,25 +81,32 @@ export default function Home() {
             })
         });
 
+        const previewPing = Date.now() - prePreview;
+
         const data = await res.json();
 
-        if (res.status != 200) return setData({
-            code,
-            name: "Room not found",
-            players: 0,
-            maxPlayers: 0,
-            status: "Room not found",
-            host: {
-                username: "No one",
-                session: "65ad62ef20121dfb0634fb6e"
-            },
-            node: {
-                id: "-1",
-                name: "nothing"
-            },
-            ping: "-1ms",
-            edgePing: "-1ms"
-        })
+        if (res.status != 200) {
+            setCanJoin(true)
+            setIsLoaded(true)
+
+            return setData({
+                code,
+                name: "Room not found",
+                players: 0,
+                maxPlayers: 0,
+                status: "Room not found",
+                host: {
+                    username: "No one",
+                    session: "65ad62ef20121dfb0634fb6e"
+                },
+                node: {
+                    id: "-1",
+                    name: "nothing"
+                },
+                ping: "-1ms",
+                edgePing: "-1ms"
+            });
+        }
 
         let newData = {
             code,
@@ -117,7 +127,7 @@ export default function Home() {
         const ping = await res.json();
 
         // Time taken for entire request - time taken for database ping
-        const edgePing = post - ping.ping;
+        const edgePing = Math.min(post - ping.ping, previewPing);
 
         newData.edgePing = edgePing + "ms"
         newData.ping = ping.ping + "ms"
