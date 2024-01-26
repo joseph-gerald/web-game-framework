@@ -1,4 +1,4 @@
-import handler from "./handler";
+import handler from "../../handler";
 
 export default class extends handler {
     constructor() { super("chat") }

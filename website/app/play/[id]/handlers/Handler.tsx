@@ -23,9 +23,11 @@ export default async function (eventProcessor: any, router: AppRouterInstance, p
             type: "medium_italic_green",
             content: "Joined " + params.id,
         });
+
+        eventProcessor.isHost = data.host;
     }
 
-    eventProcessor.state.id = data.state_id;
+    eventProcessor.state = data.state;
 
     for (const event of data.events) {
         eventProcessor.process(event, eventProcessor);
@@ -34,8 +36,6 @@ export default async function (eventProcessor: any, router: AppRouterInstance, p
     const timeSinceSync = Date.now() - roomState.lastUpdate;
 
     if (timeSinceSync < minPollingRate) await new Promise((resolve) => setTimeout(resolve, minPollingRate - timeSinceSync));
-
-    eventProcessor.state.lastUpdate = Date.now();
 
     eventProcessor.queue = [];
     eventProcessor.poll = true;

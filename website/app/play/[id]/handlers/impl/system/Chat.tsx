@@ -1,5 +1,5 @@
 import { Input } from "@nextui-org/react";
-import { ChatMessage, Message } from "../../components/message";
+import { ChatMessage, Message } from "../../../components/message";
 import { useState } from "react";
 
 interface InputCodeProps {

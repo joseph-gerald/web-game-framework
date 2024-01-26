@@ -6,7 +6,7 @@ import game_utils from "@/utils/game_utils";
 import crypto_utils from "@/utils/crypto_utils";
 
 const handlers = [
-    new ((await (import("./handlers/chat_handler"))).default)(),
+    new ((await (import("./handlers/impl/system/chat"))).default)(),
 ]
 
 export async function POST(req: NextRequest) {
@@ -98,6 +98,7 @@ export async function POST(req: NextRequest) {
     start = Date.now();
 
     const payload = {
+        ...(state_id == -1 ? { host: state.players[0].session == data.token.session_id } : {}),
         state_id: state.state.id + 1,
         events,
         state: { ...state.state, players: state.players }

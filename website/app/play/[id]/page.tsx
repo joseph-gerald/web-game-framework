@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@nextui-org/react";
+import { Divider } from "@nextui-org/react";
 import React, { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation'
-import { Chat, ChatHandler } from "./handlers/impl/Chat";
+import { Chat, ChatHandler } from "./handlers/impl/system/Chat";
 import Handler from "./handlers/Handler";
 
 export default function Page({ params }: { params: { id: string } }) {
@@ -15,6 +15,14 @@ export default function Page({ params }: { params: { id: string } }) {
             id: -1,
             lastUpdate: Date.now(),
             players: [] as any[],
+        },
+        config: {
+            showTitle: true,
+            showPlayerList: true,
+
+            showRoomCode: true,
+
+            showChat: true,
         },
         messages: [
             {
@@ -29,13 +37,13 @@ export default function Page({ params }: { params: { id: string } }) {
         process: async (event: any) => { },
         handlers: [ChatHandler] as any[],
         poll: true,
+        isHost: false,
     } as any);
 
     const eventProcessor = {
-        state: {
-            id: -1,
-            lastUpdate: Date.now()
-        },
+        state: {},
+
+        config: {},
 
         messages: [] as any[],
 
@@ -93,19 +101,48 @@ export default function Page({ params }: { params: { id: string } }) {
     return (
         <section className="absolute left-0 flex flex-row items-center justify-center h-full w-full gap-5 p-6">
             <div className="flex flex-row rounded-2xl bg-black/20 border border-secondary h-full w-full p-6 justify-between">
-                <div className="flex flex-col justify-between whitespace-nowrap">
-                    <div className="">
-                        <h1 className="absolute text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-secondary to-accent ">Flappy Bird</h1>
-                    </div>
-                </div>
-                <div className="w-full flex items-center justify-center">
+                {
+                    (persistentEventProcessor.config.showTitle || persistentEventProcessor.config.showPlayerList) ? (
+                        <div className="flex flex-col justify-between whitespace-nowrap">
+                            <div className="absolute">
+                                {
+                                    persistentEventProcessor.config.showTitle ? (
+                                        <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-secondary to-accent ">Flappy Bird</h1>
+                                    ) : <></>
+                                }
+
+                                {
+                                    persistentEventProcessor.config.showPlayerList ? (
+                                        <div>
+                                            <b className="text-xl">Players</b>
+                                            {persistentEventProcessor.state.players.map((player: any) => {
+                                                return <div key={player.session_id+player.username}>{player.username}</div>
+                                            })}
+                                        </div>
+                                    ) : <></>
+                                }
+                            </div>
+                        </div>
+                    ) : <></>
+                }
+                <div className="w-full flex flex-col gap-5 items-center justify-center">
                     <h1 className="text-5xl font-bold text-white/50">Waiting for host to start</h1>
                 </div>
-                <h1 className="text-5xl font-bold text-white/50">{params.id}</h1>
+                {
+                    persistentEventProcessor.config.showRoomCode ? (
+                        <div>
+                            <h1 className="absolute -translate-x-full text-5xl font-bold text-white/50">{params.id}</h1>
+                        </div>
+                    ) : <></>
+                }
             </div>
-            <div className="rounded-2xl bg-black/20 border border-secondary p-4 flex flex-col gap-3 h-full w-96">
-                <Chat setPersistentEventProcessor={setPersistentEventProcessor} persistentEventProcessor={persistentEventProcessor} />
-            </div>
+            {
+                persistentEventProcessor.config.showChat ? (
+                    <div className="rounded-2xl bg-black/20 border border-secondary p-4 flex flex-col gap-3 h-full w-96">
+                        <Chat setPersistentEventProcessor={setPersistentEventProcessor} persistentEventProcessor={persistentEventProcessor} />
+                    </div>
+                ) : <></>
+            }
         </section >
     );
 }
