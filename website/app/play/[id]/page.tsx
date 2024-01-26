@@ -3,7 +3,7 @@
 import { Button } from "@nextui-org/react";
 import React, { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation'
-import { Chat, ChatHandler } from "./handlers/Chat";
+import { Chat, ChatHandler } from "./handlers/impl/Chat";
 import Handler from "./handlers/Handler";
 
 export default function Page({ params }: { params: { id: string } }) {
@@ -13,7 +13,8 @@ export default function Page({ params }: { params: { id: string } }) {
     const [persistentEventProcessor, setPersistentEventProcessor] = useState({
         state: {
             id: -1,
-            lastUpdate: Date.now()
+            lastUpdate: Date.now(),
+            players: [] as any[],
         },
         messages: [
             {
@@ -56,7 +57,7 @@ export default function Page({ params }: { params: { id: string } }) {
             if (!eventProcessor.processPromise) {
                 eventProcessor.processPromise = Handler(eventProcessor, router, params, minPollingRate);
                 eventProcessor.queue = [];
-            } else {                
+            } else {
                 const newEventProcessor = await eventProcessor.processPromise;
 
                 for (const key of Object.keys(newEventProcessor)) {
@@ -96,7 +97,6 @@ export default function Page({ params }: { params: { id: string } }) {
                     <div className="">
                         <h1 className="absolute text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-secondary to-accent ">Flappy Bird</h1>
                     </div>
-                    <Button color="secondary" className="font-bold text-xl w-36">Leave</Button>
                 </div>
                 <div className="w-full flex items-center justify-center">
                     <h1 className="text-5xl font-bold text-white/50">Waiting for host to start</h1>

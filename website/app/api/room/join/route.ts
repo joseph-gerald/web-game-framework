@@ -42,7 +42,8 @@ export async function POST(req: NextRequest) {
                 timestamp: date,
                 hash: crypto_utils.sha1(JSON.stringify(data) + "joinpublic" + date).substring(0, 6),
                 data: data.token
-            }
+            },
+            'players': { ...data.token, role: "player" }
         },
         $inc: {
             'state.id': 1
@@ -58,8 +59,6 @@ export async function POST(req: NextRequest) {
         update,
         { upsert: true }
     );
-
-    state.state.id++;
 
     connection.close();
 

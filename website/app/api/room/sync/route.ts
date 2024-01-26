@@ -3,6 +3,7 @@ import state_model from "@/models/State";
 import { NextRequest } from "next/server";
 import mongoose from 'mongoose';
 import game_utils from "@/utils/game_utils";
+import crypto_utils from "@/utils/crypto_utils";
 
 const handlers = [
     new ((await (import("./handlers/chat_handler"))).default)(),
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     let start = Date.now();
 
-    const state = await State.findById(new mongoose.Types.ObjectId(data.key.room.state)).select('state records').lean();
+    const state = await State.findById(new mongoose.Types.ObjectId(data.key.room.state)).select('state records players').lean();
     //console.log(`[SYNC] Fetched state in ${Date.now() - start}ms`);
 
 
@@ -47,8 +48,18 @@ export async function POST(req: NextRequest) {
 
     const filtered = newRecord.filter((x: any) => x != null);
 
+    if (state_id == -1) {
+        filtered.push({
+            type: "connect",
+            visibility: "public",
+            timestamp: Date.now(),
+            hash: crypto_utils.sha1(JSON.stringify(data) + "joinpublic" + Date.now()).substring(0, 6),
+            data: data.token
+        })
+    }
+
     for (const [key, record] of ([...state.records as any, ...filtered as any] as any).entries()) {
-        if (key == 0) continue; 
+        if (key == 0) continue;
         if (state_id != -1 && key >= (state_id)) {
             // TODO: Implement visibility
             if (record.hash in hashes) {
@@ -73,7 +84,7 @@ export async function POST(req: NextRequest) {
                 'state.last_update': Date.now() // Set the last_update time
             }
         };
-    
+
         // Perform the update
         await State.updateOne(
             { _id: data.key.room.state },
@@ -88,7 +99,8 @@ export async function POST(req: NextRequest) {
 
     const payload = {
         state_id: state.state.id + 1,
-        events
+        events,
+        state: { ...state.state, players: state.players }
     };
 
     connection.close();

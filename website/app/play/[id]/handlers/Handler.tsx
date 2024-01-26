@@ -37,11 +37,8 @@ export default async function (eventProcessor: any, router: AppRouterInstance, p
 
     eventProcessor.state.lastUpdate = Date.now();
 
-    //|console.log(eventProcessor.queue);
     eventProcessor.queue = [];
-
     eventProcessor.poll = true;
-
     eventProcessor.processPromise = null;
 
     return eventProcessor;

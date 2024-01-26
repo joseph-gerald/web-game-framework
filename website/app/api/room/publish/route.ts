@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     const State: any = connection.model("State", state_model.Schema);
     const state = new State({
         room_id: room._id,
-        room_host: data.key.user,
+        players: [data.key.user],
         state: {
             last_update: Date.now(),
             id: 0,

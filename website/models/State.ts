@@ -7,9 +7,9 @@ const scheme = new Schema({
         type: Schema.Types.ObjectId,
         required: [true, 'Room ID is required']
     },
-    room_host: {
-        type: Object,
-        required: [true, 'Room Host is required']
+    players: {
+        type: Array,
+        required: [true, 'Players is required']
     },
     state: {
         type: Object,

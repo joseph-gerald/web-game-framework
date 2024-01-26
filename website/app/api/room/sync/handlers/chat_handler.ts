@@ -18,7 +18,7 @@ export default class extends handler {
                 this.createEvent("chat", "public", {
                     message: event.data.message,
                     sender: data.token.username,
-                    timestamp: event.data.timestamp
+                    timestamp: Date.now()
                 })
             );
         }

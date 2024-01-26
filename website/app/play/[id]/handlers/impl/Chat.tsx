@@ -1,5 +1,5 @@
 import { Input } from "@nextui-org/react";
-import { ChatMessage, Message } from "../components/message";
+import { ChatMessage, Message } from "../../components/message";
 import { useState } from "react";
 
 interface InputCodeProps {
@@ -64,7 +64,7 @@ export const Chat: React.FC<InputCodeProps> = ({ setPersistentEventProcessor, pe
 
 export const ChatHandler = (event: any, eventProcessor: any) => {
     const timestamp = new Date().toTimeString().slice(0, 5);
-    
+
     switch (event.type) {
         case "message":
             eventProcessor.messages.push({
@@ -83,13 +83,16 @@ export const ChatHandler = (event: any, eventProcessor: any) => {
                 sender: event.data.sender
             });
             break;
-        case "join":
+        case "connect":
             eventProcessor.messages.push({
                 id: event.id,
                 time: new Date().toTimeString().slice(0, 5),
                 type: "bold_gray",
-                content: event.data.username + " joined the room",
+                content: event.data.username + " just connected",
             });
+            break;
+        case "join":
+            // Join event is when you join the room from the join page and not when you connect to the room
             break;
         default:
             console.warn("Unknown event type: " + event.type);
