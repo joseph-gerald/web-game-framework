@@ -23,6 +23,8 @@ export default function Page({ params }: { params: { id: string } }) {
             showRoomCode: true,
 
             showChat: true,
+
+            screen: "idle",
         },
         messages: [
             {
@@ -32,24 +34,33 @@ export default function Page({ params }: { params: { id: string } }) {
                 content: "Joining room " + params.id
             }
         ] as any[],
+
         queue: [] as any[],
         sync: async () => { },
         process: async (event: any) => { },
         handlers: [ChatHandler] as any[],
-        poll: true,
+        screens: {
+            "idle": (
+                <div className="w-full flex flex-col gap-5 items-center justify-center">
+                    <h1 className="text-5xl font-bold text-white/50">Waiting for host to start</h1>
+                </div>
+            )
+        },
+
         isHost: false,
     } as any);
 
     const eventProcessor = {
         state: {},
 
-        config: {},
+        config: { screen: "idle" },
 
         messages: [] as any[],
 
         queue: [],
         handledHashes: {},
         handlers: [],
+        screens: {} as any,
 
         processPromise: null as any,
 
@@ -93,6 +104,10 @@ export default function Page({ params }: { params: { id: string } }) {
             for (const handler of eventProcessor.handlers) {
                 handler(event, eventProcessor);
             }
+        },
+
+        getScreen: () => {
+            return eventProcessor.screens[eventProcessor.config.screen];
         }
     }
 
@@ -116,7 +131,7 @@ export default function Page({ params }: { params: { id: string } }) {
                                         <div>
                                             <b className="text-xl">Players</b>
                                             {persistentEventProcessor.state.players.map((player: any) => {
-                                                return <div key={player.session_id+player.username}>{player.username}</div>
+                                                return <div key={player.session_id + player.username}>{player.username}</div>
                                             })}
                                         </div>
                                     ) : <></>
@@ -124,12 +139,12 @@ export default function Page({ params }: { params: { id: string } }) {
                             </div>
                         </div>
                     ) : <></>
-                }
-                <div className="w-full flex flex-col gap-5 items-center justify-center">
-                    <h1 className="text-5xl font-bold text-white/50">Waiting for host to start</h1>
-                </div>
-                {
-                    persistentEventProcessor.config.showRoomCode ? (
+
+                        +
+                        persistentEventProcessor.getScreen()
+                        +
+
+                        persistentEventProcessor.config.showRoomCode ? (
                         <div>
                             <h1 className="absolute -translate-x-full text-5xl font-bold text-white/50">{params.id}</h1>
                         </div>
