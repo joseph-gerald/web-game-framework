@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   try {
     const room = await room_model.Model.findById(data.key.room.id);
 
-    if (!room || room.status == "instantiated") return new Response(JSON.stringify({ error: "Invalid request" }), { status: 404 });
+    if (!room || room.status != "uninstantiated") return new Response(JSON.stringify({ error: "Invalid request" }), { status: 404 });
 
     const servers = game_utils.servers;
     const pingData = await Promise.all(servers.map(async (server) => {

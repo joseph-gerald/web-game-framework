@@ -1,9 +1,9 @@
 import crypto_utils from "@/utils/crypto_utils";
 
 export default abstract class {
-    name: string;
+    targets: string[];
 
-    constructor(name: string) { this.name = name }
+    constructor(targets: string[]) { this.targets = targets }
 
     abstract handle(data: any, state: any, queue: any): void;
 

@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     );
 
     connection.close();
-    connection = await mongoose.createConnection(room.node_uri);
+    connection = mongoose.createConnection(room.node_uri);
 
     const State: any = connection.model("State", state_model.Schema);
     const state = new State({
@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
         state: {
             last_update: Date.now(),
             id: 0,
+            screen: "idle"
         },
         records: {}
     });

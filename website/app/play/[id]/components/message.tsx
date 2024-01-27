@@ -21,7 +21,7 @@ const styles: { [key: string]: string } = {
 function Message(props: Props) {
     return (
         <div className="flex flex-row">
-            <small className={"mt-auto mr-1 opacity-50 " + inconsolata.className}>{props.time}</small><p className={styles[props.type]}>{props.content}</p>
+            <small suppressHydrationWarning className={"mt-auto mr-1 opacity-50 " + inconsolata.className}>{props.time}</small><p className={styles[props.type]}>{props.content}</p>
         </div>
     )
 }
@@ -29,7 +29,7 @@ function Message(props: Props) {
 function ChatMessage(props: ChatProps) {
     return (
         <div className="flex flex-row">
-            <small className={"mt-auto mr-1 opacity-50 " + inconsolata.className}>{props.time}</small><p className="font-medium">{props.sender}</p><p className="mx-2 opacity-60">{">"}</p><p className="">{props.content}</p>
+            <small suppressHydrationWarning className={"mt-auto mr-1 opacity-50 " + inconsolata.className}>{props.time}</small><p className="font-medium">{props.sender}</p><p className="mx-2 opacity-60">{">"}</p><p className="">{props.content}</p>
         </div>
     )
 }

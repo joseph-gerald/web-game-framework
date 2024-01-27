@@ -2,6 +2,7 @@ import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.share
 
 export default async function (eventProcessor: any, router: AppRouterInstance, params: any, minPollingRate: number) {
     const roomState = eventProcessor.state;
+    const preSyncTime = Date.now();
 
     const res = await fetch("/api/room/sync", {
         method: "POST",
@@ -33,11 +34,10 @@ export default async function (eventProcessor: any, router: AppRouterInstance, p
         eventProcessor.process(event, eventProcessor);
     }
 
-    const timeSinceSync = Date.now() - roomState.lastUpdate;
+    const timeSinceSync = Date.now() - preSyncTime;
 
     if (timeSinceSync < minPollingRate) await new Promise((resolve) => setTimeout(resolve, minPollingRate - timeSinceSync));
 
-    eventProcessor.queue = [];
     eventProcessor.poll = true;
     eventProcessor.processPromise = null;
 

@@ -1,7 +1,7 @@
 import handler from "../../handler";
 
 export default class extends handler {
-    constructor() { super("chat") }
+    constructor() { super(["system.chat"]) }
 
     handle(data: any, state: any, queue: any) {
         //console.log(queue);
@@ -15,7 +15,7 @@ export default class extends handler {
             console.log(event);
 
             events.push(
-                this.createEvent("chat", "public", {
+                this.createEvent("system.chat", "public", {
                     message: event.data.message,
                     sender: data.token.username,
                     timestamp: Date.now()

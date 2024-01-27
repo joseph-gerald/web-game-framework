@@ -1,20 +1,22 @@
 "use client";
 
-import { Divider } from "@nextui-org/react";
 import React, { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation'
 import { Chat, ChatHandler } from "./handlers/impl/system/Chat";
 import Handler from "./handlers/Handler";
+import { GameSelectionHandler, GameSelector } from "./handlers/impl/system/GameSelector";
+import { BoxDemo, BoxDemoHandler } from "./handlers/impl/games/BoxGame";
 
 export default function Page({ params }: { params: { id: string } }) {
     const router = useRouter();
-    const minPollingRate = 1000 / 20;
+    const minPollingRate = 1000 / 1;
 
     const [persistentEventProcessor, setPersistentEventProcessor] = useState({
         state: {
             id: -1,
             lastUpdate: Date.now(),
             players: [] as any[],
+            screen: "idle"
         },
         config: {
             showTitle: true,
@@ -22,9 +24,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
             showRoomCode: true,
 
-            showChat: true,
-
-            screen: "idle",
+            showChat: true
         },
         messages: [
             {
@@ -38,29 +38,31 @@ export default function Page({ params }: { params: { id: string } }) {
         queue: [] as any[],
         sync: async () => { },
         process: async (event: any) => { },
-        handlers: [ChatHandler] as any[],
-        screens: {
-            "idle": (
-                <div className="w-full flex flex-col gap-5 items-center justify-center">
-                    <h1 className="text-5xl font-bold text-white/50">Waiting for host to start</h1>
-                </div>
-            )
-        },
+        handlers: [ChatHandler, GameSelectionHandler, BoxDemoHandler],
+        screens: {},
+
+        games: [
+            {label: "Box Demo", value: "box_demo",},
+        ],
+        getScreen: () => { return <></> },
 
         isHost: false,
     } as any);
 
     const eventProcessor = {
-        state: {},
+        state: { screen: "idle" },
 
-        config: { screen: "idle" },
+        config: {},
 
         messages: [] as any[],
 
         queue: [],
         handledHashes: {},
         handlers: [],
-        screens: {} as any,
+        screens: {
+            "idle": <GameSelector setPersistentEventProcessor={setPersistentEventProcessor} persistentEventProcessor={persistentEventProcessor} />,
+            "box_demo": <BoxDemo setPersistentEventProcessor={setPersistentEventProcessor} persistentEventProcessor={persistentEventProcessor} />,
+        },
 
         processPromise: null as any,
 
@@ -68,19 +70,22 @@ export default function Page({ params }: { params: { id: string } }) {
 
         sync: async () => {
             for (const key of Object.keys(persistentEventProcessor)) {
-                if (typeof eventProcessor[key as keyof typeof eventProcessor] == "function") continue;
+                if (typeof eventProcessor[key as keyof typeof eventProcessor] == "function" || key == "screens") continue;
                 eventProcessor[key as keyof typeof eventProcessor] = persistentEventProcessor[key];
             }
 
-
             if (!eventProcessor.processPromise) {
+                if (eventProcessor.queue.length > 0) {
+                    Handler(eventProcessor, router, params, minPollingRate);
+                    return console.log("EVENT PUSHED")
+                }
                 eventProcessor.processPromise = Handler(eventProcessor, router, params, minPollingRate);
                 eventProcessor.queue = [];
             } else {
                 const newEventProcessor = await eventProcessor.processPromise;
 
                 for (const key of Object.keys(newEventProcessor)) {
-                    if (typeof eventProcessor[key as keyof typeof eventProcessor] == "function" || key == "queue") continue;
+                    if (typeof eventProcessor[key as keyof typeof eventProcessor] == "function" || key == "queue" || key == "screens") continue;
                     eventProcessor[key as keyof typeof eventProcessor] = newEventProcessor[key];
                 }
             }
@@ -107,7 +112,14 @@ export default function Page({ params }: { params: { id: string } }) {
         },
 
         getScreen: () => {
-            return eventProcessor.screens[eventProcessor.config.screen];
+            return (eventProcessor.screens as any)[eventProcessor.state.screen as any];
+        },
+
+        appendQueue: (event: any) => {
+            setPersistentEventProcessor({
+                ...persistentEventProcessor,
+                queue: [...persistentEventProcessor.queue, event]
+            })
         }
     }
 
@@ -139,12 +151,11 @@ export default function Page({ params }: { params: { id: string } }) {
                             </div>
                         </div>
                     ) : <></>
+                }
+                {persistentEventProcessor.getScreen()}
+                {
 
-                        +
-                        persistentEventProcessor.getScreen()
-                        +
-
-                        persistentEventProcessor.config.showRoomCode ? (
+                    persistentEventProcessor.config.showRoomCode ? (
                         <div>
                             <h1 className="absolute -translate-x-full text-5xl font-bold text-white/50">{params.id}</h1>
                         </div>

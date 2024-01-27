@@ -12,14 +12,11 @@ export const Chat: React.FC<InputCodeProps> = ({ setPersistentEventProcessor, pe
 
     const handleKeyDown = (event: any) => {
         if (event.key === 'Enter' && textValue != "") {
-            setPersistentEventProcessor({
-                ...persistentEventProcessor,
-                queue: [...persistentEventProcessor.queue, {
-                    target: "chat",
-                    data: {
-                        message: textValue
-                    }
-                }]
+            persistentEventProcessor.appendQueue({
+                target: "system.chat",
+                data: {
+                    message: textValue
+                }
             })
 
             setTextValue('');
@@ -73,7 +70,7 @@ export const ChatHandler = (event: any, eventProcessor: any) => {
                 ...event.data
             });
             break;
-        case "chat":
+        case "system.chat":
             console.info("CHAT EVENT", event);
             eventProcessor.messages.push({
                 chat: true,
@@ -83,7 +80,7 @@ export const ChatHandler = (event: any, eventProcessor: any) => {
                 sender: event.data.sender
             });
             break;
-        case "connect":
+        case "system.connect":
             eventProcessor.messages.push({
                 id: event.id,
                 time: new Date().toTimeString().slice(0, 5),
@@ -94,8 +91,5 @@ export const ChatHandler = (event: any, eventProcessor: any) => {
         case "join":
             // Join event is when you join the room from the join page and not when you connect to the room
             break;
-        default:
-            console.warn("Unknown event type: " + event.type);
-            console.info(event);
     }
 }

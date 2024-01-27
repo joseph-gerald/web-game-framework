@@ -34,7 +34,46 @@ function splitWithTail(str: string, delim: any, count: any) {
     return result;
 }
 
+function isObject(object: any) {
+    return object != null && typeof object === 'object';
+}
+
+function computeDifference(set1: any, set2: any, prefix = "") {
+    let diff: any = {
+        
+    }
+    
+    for (const [key, value] of Object.entries(set2)) {
+        if (set1[key] == undefined) {
+            if (isObject(value)) {
+                diff[prefix + key] = value;
+            } else {
+                diff[prefix + key] = value
+            }
+        }
+    }
+        
+    for (const [key, value1] of Object.entries(set1)) {
+        const value2 = set2[key];
+        if (value1 === value2) {
+            
+        } else {
+            if (isObject(value1) && isObject(value2)) {
+                diff = {
+                    ...diff,
+                    ...computeDifference(value1, value2, key + ".")
+                }
+            } else {
+                diff[prefix + key] = value2
+            }
+        }
+    }
+    
+    return diff;
+}
+
 export default {
     DEBUG, servers,
-    splitWithTail
+    splitWithTail,
+    computeDifference
 };
