@@ -61,7 +61,7 @@ function computeDifference(set1: any, set2: any, prefix = "") {
             if (isObject(value1) && isObject(value2)) {
                 diff = {
                     ...diff,
-                    ...computeDifference(value1, value2, key + ".")
+                    ...computeDifference(value1, value2, prefix + key + ".")
                 }
             } else {
                 diff[prefix + key] = value2

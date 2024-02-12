@@ -4,12 +4,15 @@ import { NextRequest } from "next/server";
 import { mongoose } from '@/app/api/_db';
 import game_utils from "@/utils/game_utils";
 import crypto_utils from "@/utils/crypto_utils";
+
 import ChatHandler from "./handlers/impl/system/chat";
 import RoomHandler from "./handlers/impl/system/room";
+import BoxGame from "./handlers/impl/box_game";
 
 const handlers = [
     new ChatHandler(),
     new RoomHandler(),
+    new BoxGame()
 ];
 
 export async function POST(req: NextRequest) {
@@ -44,9 +47,7 @@ export async function POST(req: NextRequest) {
 
     const oldState = structuredClone(state.state);
 
-    const newRecord = handlers.flatMap(handler =>
-        handler.handle(data, state, queue.filter((event: any) => handler.targets.includes(event.target)))
-    );
+    const newRecord = handlers.flatMap(handler => handler.handle(data, state, queue.filter((event: any) => handler.targets.includes(event.target))));
 
     const filtered = newRecord.filter((x: any) => x !== null);
 
@@ -70,11 +71,17 @@ export async function POST(req: NextRequest) {
         }
     }
 
-    const differences = state.state;
-
     if (filtered.length != 0 || state.state != oldState) {
-        console.log(oldState, state.state)
-        console.log(game_utils.computeDifference(oldState, state.state, "state."))
+        //console.log(oldState, state.state)
+        const diff = game_utils.computeDifference(oldState, state.state, "state.");
+
+        let numericDiff = Object.keys(diff).filter(x => !isNaN(diff[x])).map(x => ({ [x]: diff[x] }));
+        //numericDiff = numericDiff.reduce((a, b) => Object.assign(a, b), {});
+        const otherDiffs = Object.keys(diff).filter(x => isNaN(diff[x])).map(x => ({ [x]: diff[x] }));
+
+        //console.log(diff);
+        console.log(numericDiff);
+
         const update = {
             $push: {
                 'records': {
@@ -82,11 +89,11 @@ export async function POST(req: NextRequest) {
                 }
             },
             $inc: {
-                ...(filtered.length != 0 ? {'state.id': 1} : {})
+                ...(filtered.length != 0 ? {'state.id': 1} : {}),
             },
             $set: {
                 'state.last_update': Date.now(), // Set the last_update time
-                ...game_utils.computeDifference(oldState, state.state, "state.")
+                ...diff
             }
         };
 
@@ -101,7 +108,7 @@ export async function POST(req: NextRequest) {
     }
 
     const payload = {
-        ...(state_id === -1 ? { host: state.players[0].session === data.token.session_id } : {}),
+        ...(state_id === -1 ? { host: state.players[0].session_id === data.token.session_id } : {}),
         state_id: state.state.id + 1,
         events,
         state: { ...state.state, players: state.players }

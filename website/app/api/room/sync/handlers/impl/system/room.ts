@@ -20,7 +20,7 @@ export default class extends handler {
                             state.state.box_game = {
                                 players: state.players.map((player: any) => {
                                     return {
-                                        session: player.session,
+                                        session_id: player.session_id,
                                         username: player.username,
                                         x: 0,
                                         y: 0

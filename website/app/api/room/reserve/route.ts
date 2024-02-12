@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
         },
         user: {
             role,
-            session,
+            session_id: session,
             username: data.username
         }
     });

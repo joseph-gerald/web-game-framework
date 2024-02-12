@@ -7,11 +7,13 @@ export default async function (eventProcessor: any, router: AppRouterInstance, p
     const res = await fetch("/api/room/sync", {
         method: "POST",
         body: JSON.stringify({
-            state_id: roomState.id,
+            state_id: eventProcessor.queue.length > 0 ? 2147483647 : roomState.id,
             queue: eventProcessor.queue,
-            hashes: eventProcessor.handledHashes
+            hashes: eventProcessor.handledHashes ?? {}
         })
     })
+
+    if (eventProcessor.queue.length > 0) return eventProcessor;
 
     const data = await res.json();
 

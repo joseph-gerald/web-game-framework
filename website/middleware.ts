@@ -31,7 +31,7 @@ async function validateRoomKey(request: NextRequest, key: RequestCookie | undefi
   }
 
   if (!data.token || !data.key ||
-    data.token.session_id != data.key.user.session) return NextResponse.redirect(new URL('/', request.url))
+    data.token.session_id != data.key.user.session_id) return NextResponse.redirect(new URL('/', request.url))
 
   const referredCode = request.headers.get("referer")?.split("/").pop() || pathname.split("/").pop();
   const roomCode = data.key.room.code;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from 'next/navigation'
 import { Chat, ChatHandler } from "./handlers/impl/system/Chat";
 import Handler from "./handlers/Handler";
@@ -9,7 +9,7 @@ import { BoxDemo, BoxDemoHandler } from "./handlers/impl/games/BoxGame";
 
 export default function Page({ params }: { params: { id: string } }) {
     const router = useRouter();
-    const minPollingRate = 1000 / 1;
+    const minPollingRate = 1000 / 20;
 
     const [persistentEventProcessor, setPersistentEventProcessor] = useState({
         state: {
@@ -116,10 +116,10 @@ export default function Page({ params }: { params: { id: string } }) {
         },
 
         appendQueue: (event: any) => {
-            setPersistentEventProcessor({
+            Handler({
                 ...persistentEventProcessor,
                 queue: [...persistentEventProcessor.queue, event]
-            })
+            }, router, params, minPollingRate);
         }
     }
 
