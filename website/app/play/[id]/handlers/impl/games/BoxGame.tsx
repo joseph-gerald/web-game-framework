@@ -8,7 +8,7 @@ interface Props {
 export const BoxDemo: React.FC<Props> = ({ setPersistentEventProcessor, persistentEventProcessor }) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const animationFrameId = useRef<NodeJS.Timeout | null>(null);
-    const gameLoopId = useRef<number | null>(null);
+    const gameLoopId: any = useRef<number | null>(null);
     const game: any = useRef({});
     const lastGame: any = useRef({});
     const momemtums: any = useRef({});
